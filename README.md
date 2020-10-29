@@ -16,5 +16,5 @@ cd $PRJ
 cp "$2" $PRJ.sql
 git add $PRJ.sql
 git commit 
-git push origin
+git push origin $PRJ
 ```
