@@ -1,5 +1,5 @@
 --Уникальная модель тс с описанием ее характеристик(тип, название, вместимость)
---Модель тс(id_ts, тип тс, название модели, вместимость)
+--Модель тс(id_vehicle, тип тс, название модели, вместимость)
 
 CREATE TYPE model_type AS ENUM ('автобус', 'троллейбус', 'трамвай', 'ТУАХ', 'электробус');
 
@@ -7,21 +7,21 @@ CREATE TABLE model (
     id SERIAL PRIMARY KEY,
     type model_type NOT NULL,
     name TEXT NOT NULL,
-capacity INT CHECK(capacity > 0)
+    capacity INT CHECK(capacity > 0)
 );
 
 --Транспортные средства:
 --модель транспортного средства с уникальным номером-идентификатором, --определенного года выпуска и его актуальным состоянием.
---ТС(модель тс(id_ts), бортовой номер-идентификатор, год выпуска, состояние тс)
+--ТС(модель тс(id_vehicle), бортовой номер-идентификатор, год выпуска, состояние тс)
 
-CREATE TYPE ts_state AS ENUM ('исправен', 'некритические неисправности', 'требует
+CREATE TYPE vehicle_state AS ENUM ('исправен', 'некритические неисправности', 'требует
 ремонта');
 
-CREATE TABLE ts (
+CREATE TABLE vehicle (
     -- 1:M одному тс соответствует одна модель, одной модели - много тс
     id SERIAL PRIMARY KEY,
     date_release INT NOT NULL CHECK(date_release BETWEEN 1800 AND 2200),
-    state ts_state NOT NULL,
+    state vehicle_state NOT NULL,
     model_id INT  NOT NULL,
     FOREIGN KEY(model_id)
         REFERENCES model(id)
@@ -56,7 +56,7 @@ CREATE TABLE route (
 --Номер ТС который выйдет на “номер маршрута” и время прибытия на определенную --платформу в выходной или рабочий день.
 
 CREATE TABLE time_table (
-    ts_id INT,
+    vehicle_id INT,
     route_id INT,
     stop_id INT,
     platform_number INT CHECK(platform_number > 0) ,
@@ -65,8 +65,8 @@ CREATE TABLE time_table (
         REFERENCES stop(id),
     FOREIGN KEY(route_id)
         REFERENCES route(id),
-    FOREIGN KEY(ts_id)
-        REFERENCES ts(id),
+    FOREIGN KEY(vehicle_id)
+        REFERENCES vehicle(id),
     UNIQUE(stop_id, platform_number, time)
 -- На одной остановке у одной платформы в одно время может стоять одно тс
 );
@@ -94,20 +94,20 @@ CREATE TABLE work_order (
     -- 1:M одному наряду соответствует 1 водитель, одному водителю много нарядов
     id SERIAL PRIMARY KEY,
     route_id INT,
-    ts_id INT,
+    vehicle_id INT,
     stop_id INT,
     day DATE NOT NULL,
     time TIMESTAMP NOT NULL,
     driver_id INT,
     FOREIGN KEY(route_id)
         REFERENCES route(id),
-    FOREIGN KEY(ts_id)
-        REFERENCES ts(id),
+    FOREIGN KEY(vehicle_id)
+        REFERENCES vehicle(id),
     FOREIGN KEY(stop_id)
         REFERENCES stop(id),
     FOREIGN KEY(driver_id)
         REFERENCES driver(id),
-    UNIQUE (day, ts_id)
+    UNIQUE (day, vehicle_id)
 );
 
 
@@ -141,11 +141,11 @@ CREATE TABLE ticket_menu (
 --СтатистикаОплаты(ид пункта билетного меню, номер-идентификатор ТС, время)
 
 CREATE TABLE statistic (
-    ts_id INT,
+    vehicle_id INT,
     ticket_menu_id INT,
     time TIMESTAMP NOT NULL,
-    FOREIGN KEY(ts_id)
-        REFERENCES ts(id),
+    FOREIGN KEY(vehicle_id)
+        REFERENCES vehicle(id),
     FOREIGN KEY(ticket_menu_id)
         REFERENCES ticket_menu(id)
 );
