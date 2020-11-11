@@ -1,4 +1,3 @@
-
 --Уникальная модель тс с описанием ее характеристик(тип, название, вместимость)
 --Модель тс(id_ts, тип тс, название модели, вместимость)
 
@@ -21,15 +20,12 @@ CREATE TYPE ts_state AS ENUM ('исправен', 'некритические н
 CREATE TABLE ts (
     -- 1:M одному тс соответствует одна модель, одной модели - много тс
     id SERIAL PRIMARY KEY,
-date_release INT NOT NULL CHECK(date_release BETWEEN 1800 AND 2200),
-state ts_state NOT NULL,
-model_id INT  NOT NULL,
--- Связь 1:1 у одного тс одна модель
-FOREIGN KEY(model_id)
-REFERENCES model(id)
+    date_release INT NOT NULL CHECK(date_release BETWEEN 1800 AND 2200),
+    state ts_state NOT NULL,
+    model_id INT  NOT NULL,
+    FOREIGN KEY(model_id)
+        REFERENCES model(id)
 );
-
-
 
 --Остановки и маршруты:
 --Уникальный номер остановки, с точным адресом и количеством платформ
@@ -46,20 +42,18 @@ REFERENCES model(id)
 
 CREATE TABLE route (
 -- Связь 1:M у одного маршрута одна конечная остановка, у одной конечной    --остановки много маршрутов
-id INT PRIMARY KEY,
+    id INT PRIMARY KEY,
     type model_type NOT NULL,
     start_id INT ,
     end_id INT,
     FOREIGN KEY(start_id)
-REFERENCES stop(id),
-FOREIGN KEY(end_id)
-REFERENCES stop(id)
+        REFERENCES stop(id),
+    FOREIGN KEY(end_id)
+        REFERENCES stop(id)
 );
 
 --Расписание(тс, номер маршрута, время прибытия, номер остановки, платформа, --выходной или рабочий день) (то есть время до минуты уникальное)
 --Номер ТС который выйдет на “номер маршрута” и время прибытия на определенную --платформу в выходной или рабочий день.
-
-
 
 CREATE TABLE time_table (
     ts_id INT,
@@ -68,12 +62,12 @@ CREATE TABLE time_table (
     platform_number INT CHECK(platform_number > 0) ,
     time TIMESTAMP NOT NULL,
     FOREIGN KEY(stop_id)
-REFERENCES stop(id),
-FOREIGN KEY(route_id)
-REFERENCES route(id),
-FOREIGN KEY(ts_id)
-REFERENCES ts(id),
-UNIQUE(stop_id, platform_number, time)
+        REFERENCES stop(id),
+    FOREIGN KEY(route_id)
+        REFERENCES route(id),
+    FOREIGN KEY(ts_id)
+        REFERENCES ts(id),
+    UNIQUE(stop_id, platform_number, time)
 -- На одной остановке у одной платформы в одно время может стоять одно тс
 );
 
@@ -95,25 +89,25 @@ CREATE TABLE driver (
 
 CREATE TABLE work_order (
     -- 1:M одному наряду соответствует 1 маршрут, одному маршрут много нарядов
-     -- 1:M одному наряду соответствует 1 тс, одному тс много нарядов
--- 1:M одному наряду соответствует 1 начальная остановка, одной начальной остановке много нарядов
--- 1:M одному наряду соответствует 1 водитель, одному водителю много нарядов
+    -- 1:M одному наряду соответствует 1 тс, одному тс много нарядов
+    -- 1:M одному наряду соответствует 1 начальная остановка, одной начальной остановке много нарядов
+    -- 1:M одному наряду соответствует 1 водитель, одному водителю много нарядов
     id SERIAL PRIMARY KEY,
     route_id INT,
-ts_id INT,
+    ts_id INT,
     stop_id INT,
     day DATE NOT NULL,
-time TIMESTAMP NOT NULL,
+    time TIMESTAMP NOT NULL,
     driver_id INT,
-FOREIGN KEY(route_id)
-REFERENCES route(id),
-FOREIGN KEY(ts_id)
-REFERENCES ts(id),
-FOREIGN KEY(stop_id)
-REFERENCES stop(id),
-FOREIGN KEY(driver_id)
-REFERENCES driver(id),
-UNIQUE (day, ts_id)
+    FOREIGN KEY(route_id)
+        REFERENCES route(id),
+    FOREIGN KEY(ts_id)
+        REFERENCES ts(id),
+    FOREIGN KEY(stop_id)
+        REFERENCES stop(id),
+    FOREIGN KEY(driver_id)
+        REFERENCES driver(id),
+    UNIQUE (day, ts_id)
 );
 
 
@@ -125,12 +119,12 @@ CREATE TABLE control (
 -- N:M одному наряду соответствует много остановок, одной остановке - много нарядов
     work_order_id INT,
     stop_id INT,
-appointed_time TIMESTAMP NOT NULL,
+    appointed_time TIMESTAMP NOT NULL,
     real_time TIMESTAMP NOT NULL,
-FOREIGN KEY(work_order_id)
-REFERENCES work_order(id),
-FOREIGN KEY(stop_id)
-REFERENCES stop(id)
+    FOREIGN KEY(work_order_id)
+        REFERENCES work_order(id),
+    FOREIGN KEY(stop_id)
+        REFERENCES stop(id)
 );
 
 --Пункт билетного меню с данным "ид" и "названием"
@@ -138,7 +132,7 @@ REFERENCES stop(id)
 
 CREATE TABLE ticket_menu (
     id SERIAL PRIMARY KEY,
-name TEXT NOT NULL,
+    name TEXT NOT NULL,
     price INT CHECK(price > 0)
 );
 
@@ -147,27 +141,11 @@ name TEXT NOT NULL,
 --СтатистикаОплаты(ид пункта билетного меню, номер-идентификатор ТС, время)
 
 CREATE TABLE statistic (
-    --
     ts_id INT,
     ticket_menu_id INT,
-time TIMESTAMP NOT NULL,
-FOREIGN KEY(ts_id)
-REFERENCES ts(id),
-FOREIGN KEY(ticket_menu_id)
-REFERENCES ticket_menu(id)
+    time TIMESTAMP NOT NULL,
+    FOREIGN KEY(ts_id)
+        REFERENCES ts(id),
+    FOREIGN KEY(ticket_menu_id)
+        REFERENCES ticket_menu(id)
 );
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
