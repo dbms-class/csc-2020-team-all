@@ -12,8 +12,10 @@ DROP TYPE IF EXISTS BookingReviewParams CASCADE;
 DROP TABLE IF EXISTS BookingReview CASCADE;
 DROP TABLE IF EXISTS BookingReview_BookingReviewParams CASCADE;
 DROP TABLE IF EXISTS CustomerReviews CASCADE;
-DROP TYPE IF EXISTS GENRE CASCADE;
+DROP TABLE IF EXISTS GENRE CASCADE;
 DROP TABLE IF EXISTS Event CASCADE;
+
+CREATE TYPE SEX AS ENUM('M', 'F');
 
 -- User с данным id имеет: имя(name), фамилию(surname), email, телефон(phone), пол(sec), день рождения (birthday), url на фото (photo)
 CREATE TABLE Users (
@@ -21,17 +23,19 @@ CREATE TABLE Users (
     name TEXT NOT NULL,
     surname TEXT NOT NULL,
     -- email и телефон должны быть уникальны
-    email TEXT UNIQUE NOT NULL,
-    phone TEXT UNIQUE NOT NULL,
-    sex BIT,
+    email VARCHAR(30) UNIQUE NOT NULL,
+    phone VARCHAR(30) UNIQUE NOT NULL,
+    sex SEX,
     birthday DATE,
-    photo TEXT
+    photo TEXT,
+	
+	CHECK(email LIKE '%_@__%.__%')
 );
 
 -- Страна с этим id имеет: уникальное название (name), стоимость сервисного сбора tax
 CREATE TABLE Country (
     id SERIAL PRIMARY KEY,
-    name TEXT UNIQUE,
+    name TEXT NOT NULL UNIQUE,
     tax INT NOT NULL,
     CHECK (tax >= 0)
 );
@@ -64,7 +68,7 @@ CREATE TABLE Comfort(
     name TEXT UNIQUE
 );
 
--- Таблица связывает апартаменты с удобствами, которые в них есть; иных ключей быть не должно
+-- Таблица связывает апартаменты с удобствами, которые в них есть
 CREATE TABLE ApartmentComfort(
     apartment_id INT NOT NULL,
     comfort_id INT NOT NULL,
@@ -75,21 +79,21 @@ CREATE TABLE ApartmentComfort(
 
 -- Апартаменты appartment_id в неделю week стоят price денег; другие ключи не нужны
 CREATE TABLE Price (
-    appartment_id INT NOT NULL,
+    apartment_id INT NOT NULL,
     week INT NOT NULL,
     price INT NOT NULL,
     -- связь 1:M апартаментов и цен. У одних апартаментов могут быть указано множество цен для различных недель.
-    FOREIGN KEY(appartment_id) REFERENCES Apartment(id),
+    FOREIGN KEY(apartment_id) REFERENCES Apartment(id),
     CHECK(week BETWEEN 1 AND 52),
     CHECK(price >= 0),
     -- чтобы не было неоднозначного задания цены одних апартаментов в одну неделю
-    CONSTRAINT c_apartament_week UNIQUE (appartment_id, week)
+    CONSTRAINT c_apartament_week UNIQUE (apartment_id, week)
 );
 
 -- Заявка с этим id подана на апартаменты appartment_id, арендодателем user_id и имеет свойства: время начала бронирования (start_date), время конца бронирования (end_date), количество проживающих (roommates_count), комментарий (comment), статус подтверждения (confirmed), полную цену (full_price)
 CREATE TABLE Application (
     id SERIAL PRIMARY KEY,
-    appartment_id INT NOT NULL,
+    apartment_id INT NOT NULL,
     user_id INT NOT NULL,
     date_start DATE NOT NULL,
     date_end DATE NOT NULL,
@@ -98,20 +102,26 @@ CREATE TABLE Application (
     confirmed BOOLEAN,
     full_price INT NOT NULL,
     -- cвязь N:1 заявок и апартаментов. Может быть множество заявок на одни апартаменты, но для одной заявки апартаменты указаны однозначно.
-    FOREIGN KEY(appartment_id) REFERENCES Apartment(id),
+    FOREIGN KEY(apartment_id) REFERENCES Apartment(id),
     -- cвязь N:1 заявок и пользователей. У одного пользователя может быть множество заявок, но для одной заявки пользователь указан однозначно.
     FOREIGN KEY(user_id) REFERENCES Users(id),
     CHECK(roommates_count >= 1),
-    CHECK(full_price >= 0)
+    CHECK(full_price >= 0),
+	CHECK(date_start < date_end)
 );
 
 -- Оценки пользователей о жилье: оценка id дана на апартаменты appartment_id и содержит текст review
 CREATE TABLE BookingReview (
     id SERIAL PRIMARY KEY,
-    appartment_id INT NOT NULL,
+	rentor_id INT NOT NULL,
+    apartment_id INT NOT NULL,
+	date DATE NOT NULL,
     review TEXT,
     -- связь 1:M апартаментов и отзывов. К одним апартаментам может быть множество отзывов, но для отзыва апартаменты указаны однозначно.
-    FOREIGN KEY(appartment_id) REFERENCES Apartment(id)
+    FOREIGN KEY(apartment_id) REFERENCES Apartment(id),
+	-- связь 1:M арендаторов и отзывов. Арендатор оставляет много отзывов, каждый из которых имеет лишь одного автора
+    FOREIGN KEY(rentor_id) REFERENCES Users(id)
+
 );
 
 -- Список параметров оценки жилья
@@ -121,28 +131,35 @@ CREATE TYPE BookingReviewParams AS ENUM(
     'Дружественность хозяина'
 );
 
--- Таблица с результатами оценки жилья арендатором: ревью с BookingReview_id имеет оценку score по параметру param
+-- Таблица с результатами оценки жилья арендатором: ревью с BookingReview_id имеет оценку score по параметру param; других ключей быть не должно
 CREATE TABLE BookingReview_BookingReviewParams (
     BookingReview_id INT,
     param BookingReviewParams,
     score INT CHECK(score IN (1, 2, 3, 4, 5)),
     -- Связь N:1 параметров и отзывов. В одном отзыве могут быть оценки по множеству параметров, но для данной оценки по параметру отзыв указан однозначно.
-    FOREIGN KEY(BookingReview_id) REFERENCES BookingReview(id)
+    FOREIGN KEY(BookingReview_id) REFERENCES BookingReview(id),
+	-- чтобы не было неоднозначного задания оценки по одному критерию в одном отзыве
+    CONSTRAINT c_review_param UNIQUE (BookingReview_id, param)
+
 );
     
 -- Оценка арендодателем арендатора: отзыв на арендатора имеет текст отзыва (review), оценку (score)
 CREATE TABLE CustomerReviews (
-    renter_id INT NOT NULL,
+    user_id INT NOT NULL,
+	rentor_id INT NOT NULL,
     review TEXT,
+	date DATE NOT NULL,
     score INT CHECK(score IN (1, 2, 3, 4, 5)),
     -- связь 1:M арендаторов и отзывов. На каждого арендатора может быть дано множество отзывов, но каждый отзыв соответствует единственному арендатору.
-    FOREIGN KEY(renter_id) REFERENCES Users(id)
+    FOREIGN KEY(user_id) REFERENCES Users(id),
+	-- связь 1:M арендодателей и отзывов. Каждый арендодатель может оставлять множество отзывов, но каждый отзыв дан конкретным арендодателем.
+    FOREIGN KEY(rentor_id) REFERENCES Users(id)
 );
 
--- Список жанров
-CREATE TYPE GENRE AS ENUM(
-    'фестиваль',
-    'кинопоказ'
+-- Жанр с таким id имеет: название(name)
+CREATE TABLE Genre (
+	id SERIAL PRIMARY KEY,
+	name TEXT NOT NULL
 );
 
 -- Событие с таким id имеет: название(name), место проведения (address), gps координаты (GPS), время начала (date_start), время окончания (date_end), жанр (genre)
@@ -150,8 +167,14 @@ CREATE TABLE Event (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     address TEXT NOT NULL,
-    GPS TEXT,
+	latitude DECIMAL(8, 6) NOT NULL,
+	longitude DECIMAL(9, 6) NOT NULL,
     date_start DATE NOT NULL,
     date_end DATE NOT NULL,
-    genre GENRE
+    genre_id INT NOT NULL,
+
+	FOREIGN KEY(genre_id) REFERENCES Genre(id),
+	-- чтобы не было двух событий в одном месте в одно время
+    CONSTRAINT c_place_time UNIQUE (latitude, longitude, date_start),
+	CHECK(date_start <= date_end)
 );
