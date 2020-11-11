@@ -1,129 +1,161 @@
-CREATE TABLE sex(
-  id INT NOT NULL,
-  name TEXT NOT NULL,
-  PRIMARY KEY (id)
+CREATE DOMAIN PHONE AS TEXT CHECK (VALUE ~ '([0-9]{3}\-?[0-9]{3}\-?[0-9]{4})');
+CREATE DOMAIN URL AS TEXT CHECK (VALUE ~
+                                 'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,255}\.[a-z]{2,9}\y([-a-zA-Z0-9@:%_\+.,~#?!&>//=]*)$');
+
+CREATE TYPE APARTMENT_PARAMETER AS ENUM ('Placement', 'Clean', 'Friendly');
+CREATE TYPE ENTERTAINMENT_GENRE AS ENUM ('пляж', 'фестиваль', 'спорт');
+CREATE TYPE SEX AS ENUM ('Мужской', 'Женский', 'Другое');
+
+CREATE TABLE CONVENIENCE
+(
+    id   SERIAL PRIMARY KEY,
+    name TEXT UNIQUE NOT NULL
 );
 
-CREATE TABLE person (
-  id INT NOT NULL,
-  name TEXT NOT NULL,
-  surname TEXT NOT NULL,
-  email TEXT NOT NULL, -- add email check
-  phone TEXT NOT NULL, -- add phone check
-  sex_id INT NULL,
-  date_of_birth DATE NULL,
-  photo TEXT NULL, --add link check
-  PRIMARY KEY (id)
+CREATE TABLE PERSON
+(
+    id            SERIAL PRIMARY KEY,
+    name          TEXT  NOT NULL,
+    surname       TEXT  NOT NULL,
+    email         TEXT  NOT NULL,
+    phone         PHONE NOT NULL,
+    sex           SEX,
+    date_of_birth DATE,
+    photo         URL
 );
 
-CREATE TABLE country (
-  id INT NOT NULL,
-  name TEXT NOT NULL, -- страна всегда имеет имя
-  commission INT,
-  PRIMARY KEY (id)
+CREATE TABLE COUNTRY
+(
+    id         SERIAL PRIMARY KEY,
+    name       TEXT UNIQUE NOT NULL,
+    commission INT CHECK ( commission >= 0 )
 );
 
-CREATE TABLE apartment (
-  id INT NOT NULL,
-  name TEXT NOT NULL,
-  person_id INT NOT NULL, -- пользователь не размещает жилье анонимно
-  country_id INT REFERENCES Country,
-  address TEXT,
-  latitude NUMERIC,
-  longitude NUMERIC,
-  num_of_rooms INT,
-  num_of_bed INT,
-  max_person INT,
-  cleaning_price INT,
-  PRIMARY KEY (id)
+CREATE TABLE APARTMENT
+(
+    id             SERIAL PRIMARY KEY,
+    name           TEXT UNIQUE NOT NULL,
+    landlord_id    INT         NOT NULL REFERENCES PERSON (id),
+    country_id     INT         NOT NULL REFERENCES COUNTRY (id),
+    address        TEXT,
+    latitude       NUMERIC CHECK ( ABS(latitude) <= 90 ),
+    longitude      NUMERIC CHECK ( ABS(latitude) <= 180 ),
+    num_of_rooms   SMALLINT CHECK ( num_of_rooms >= 0 ),
+    num_of_bed     SMALLINT CHECK ( num_of_bed >= 0 ),
+    max_person     SMALLINT CHECK ( max_person >= 0 ),
+    cleaning_price INT CHECK ( cleaning_price >= 0 )
 );
 
-
--- CREATE TYPE convenience AS ENUM ('Wi-Fi', 'утюг', 'фен');
-
-CREATE TABLE convenience (
-  id INT NOT NULL,
-  name TEXT NOT NULL,
-  PRIMARY KEY (id)
-);
-
-CREATE TABLE ConvenienceApartmentTable(
-  convenience_id INT NOT NULL REFERENCES convenience,
-  apartment_id INT NOT NULL REFERENCES apartment,
- PRIMARY KEY(convenience_id, apartment_id)
+CREATE TABLE CONVENIENCE_APARTMENT_TABLE
+(
+    convenience_id INT NOT NULL REFERENCES CONVENIENCE (id),
+    apartment_id   INT NOT NULL REFERENCES APARTMENT (id),
+    PRIMARY KEY (convenience_id, apartment_id)
 );
 
 
-CREATE TABLE price (
-  id INT NOT NULL,
-  apartment_id INT NOT NULL,
-  period_start DATE,
-  period_end DATE,
-  price INT NOT NULL,
-  PRIMARY KEY (id)
+CREATE TABLE PRICE
+(
+    id           SERIAL PRIMARY KEY,
+    apartment_id INT UNIQUE NOT NULL REFERENCES APARTMENT (id),
+    week         INT        NOT NULL CHECK ( week > 0 and week <= 53 ),
+    price        INT        NOT NULL CHECK ( price >= 0 )
 );
 
-CREATE TABLE application(
-  id INT NOT NULL,
-  apartment_id INT NOT NULL,
-  period_start DATE NOT NULL, -- заявка на неопределенный срок не может существовать
-  period_end DATE NOT NULL,
-  num_of_people INT,
-  comment TEXT,
-  approved BOOLEAN,
-  total_price INT NOT NULL,
-  PRIMARY KEY (id)
+CREATE TABLE APPLICATION
+(
+    id            SERIAL PRIMARY KEY,
+    renter_id     INT  NOT NULL REFERENCES PERSON (id),
+    apartment_id  INT  NOT NULL REFERENCES APARTMENT (id),
+    period_start  DATE NOT NULL,
+    period_end    DATE NOT NULL,
+    num_of_people SMALLINT CHECK ( num_of_people >= 0 ),
+    comment       TEXT,
+    approved      BOOLEAN,
+    total_price   INT  NOT NULL CHECK ( total_price >= 0 )
 );
 
-CREATE TABLE landlord_review(
-  id INT NOT NULL,
-  landlord_person_id INT NOT NULL,
-  renter_person_id INT NOT NULL,
-  apartment_id INT NOT NULL,
-  date DATE NOT NULL,
-  text TEXT,
-  mark INT NOT NULL,
-  PRIMARY KEY (id)
+CREATE TABLE LANDLORD_REVIEW
+(
+    id                 SERIAL PRIMARY KEY,
+    landlord_person_id INT  NOT NULL REFERENCES PERSON (id),
+    renter_person_id   INT  NOT NULL REFERENCES PERSON (id),
+    apartment_id       INT  NOT NULL REFERENCES APARTMENT (id),
+    date               DATE NOT NULL,
+    text               TEXT,
+    mark               INT  NOT NULL CHECK ( mark <@ int4range(1, 5))
 );
 
-CREATE TYPE apartment_parameter AS ENUM ('Placement', 'Clean', 'Friendly');
+CREATE OR REPLACE FUNCTION process_landlord_review() RETURNS TRIGGER AS
+$landlord_review$
+DECLARE
+    apartment_landlord PERSON;
+    rent_count         INT;
+BEGIN
+    SELECT landlord_id FROM APARTMENT WHERE NEW.apartment_id = id INTO apartment_landlord;
+    IF apartment_landlord != NEW.landlord_person THEN
+        RAISE EXCEPTION 'These landlord does not have such apartment';
+    END IF;
 
+    SELECT COUNT(*)
+    FROM APPLICATION
+    WHERE NEW.apartment_id = apartment_id
+      AND NEW.renter_person_id = renter_id
+      AND approved = TRUE
+    INTO rent_count;
+    IF rent_count == 0 THEN
+        RAISE EXCEPTION 'These renter does not rent such apartment';
+    END IF;
+    RETURN NEW;
+END;
+$landlord_review$ LANGUAGE plpgsql;
 
-CREATE TABLE apartment_mark(
-  id INT NOT NULL,
-  landlord_review_id INT NOT NULL,
-  apartment_parameter_id INT NOT NULL,
-  mark INT NOT NULL,
-  PRIMARY KEY (id)
+CREATE TABLE APARTMENT_MARK
+(
+    id                  SERIAL PRIMARY KEY,
+    landlord_review     LANDLORD_REVIEW     NOT NULL,
+    apartment_parameter APARTMENT_PARAMETER NOT NULL,
+    mark                INT                 NOT NULL CHECK ( mark <@ int4range(1, 5)),
+    UNIQUE (landlord_review, apartment_parameter)
 );
 
-CREATE TABLE renter_review(
-  id INT NOT NULL,
-  landlord_person_id INT NOT NULL,
-  renter_person_id INT NOT NULL,
-  apartment_id INT NOT NULL,
-  date DATE NOT NULL,
-  text TEXT,
-  mark INT NOT NULL,
-  PRIMARY KEY (id)
+CREATE TABLE RENTER_REVIEW
+(
+    id               SERIAL PRIMARY KEY,
+    renter_person_id INT  NOT NULL REFERENCES PERSON (id),
+    apartment_id     INT  NOT NULL REFERENCES APARTMENT (id),
+    date             DATE NOT NULL,
+    text             TEXT,
+    mark             INT  NOT NULL CHECK ( mark <@ int4range(1, 5))
 );
 
--- CREATE TYPE entertainment_genre AS ENUM (‘пляж’, 'фестиваль', ‘спорт’);
+CREATE OR REPLACE FUNCTION process_renter_review() RETURNS TRIGGER AS
+$renter_review$
+DECLARE
+    rent_count INT;
+BEGIN
+    SELECT COUNT(*)
+    FROM APPLICATION
+    WHERE NEW.apartment_id = apartment_id
+      AND NEW.renter_person_id = renter_id
+      AND approved = TRUE
+    INTO rent_count;
 
-CREATE TABLE entertainment_genre (
-  id INT NOT NULL,
-  name TEXT NOT NULL,
-  PRIMARY KEY (id)
-);
+    IF rent_count == 0 THEN
+        RAISE EXCEPTION 'These renter does not rent such apartment';
+    END IF;
+    RETURN NEW;
+END;
+$renter_review$ LANGUAGE plpgsql;
 
-CREATE TABLE Entertainment(
-  id INT NOT NULL,
-  name TEXT NOT NULL,
-  country_id INT REFERENCES Country,
-  latitude NUMERIC,
-  longitude NUMERIC,
-  period_start DATE NOT NULL, -- событие на неопределенный срок не может существовать
-  period_end DATE NOT NULL,
-  entertainment_genre_id INT NOT NULL REFERENCES entertainment_genre,
-  PRIMARY KEY (id)
+CREATE TABLE entertainment
+(
+    id                  SERIAL PRIMARY KEY,
+    name                TEXT UNIQUE         NOT NULL,
+    country             INT                 NOT NULL REFERENCES COUNTRY (id),
+    latitude            NUMERIC CHECK ( ABS(latitude) <= 90 ),
+    longitude           NUMERIC CHECK ( ABS(latitude) <= 180 ),
+    period_start        DATE                NOT NULL, -- событие на неопределенный срок не может существовать
+    period_end          DATE                NOT NULL,
+    entertainment_genre ENTERTAINMENT_GENRE NOT NULL
 );
