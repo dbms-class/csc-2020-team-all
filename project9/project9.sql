@@ -24,6 +24,7 @@ CREATE TABLE Region
     name       TEXT NOT NULL,
     country_id INT  NOT NULL,
     PRIMARY KEY (id),
+    UNIQUE (country_id, name),
     FOREIGN KEY (country_id) REFERENCES Country (id)
 );
 
@@ -34,7 +35,7 @@ CREATE TABLE Groups
 (
     id        SERIAL,
     name      TEXT NOT NULL UNIQUE,
-    region_id INT NOT NULL,
+    region_id INT  NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (region_id) REFERENCES Region (id)
 );
@@ -61,7 +62,7 @@ CREATE TABLE Musician
     end_date         DATE default NULL,
     group_id         INT NOT NULL,
     PRIMARY KEY (id),
-    CHECK ( end_date >= begin_date OR end_date is NULL ),
+    CHECK ( end_date >= begin_date ),
     FOREIGN KEY (musician_info_id) REFERENCES MusicianInfo (id),
     FOREIGN KEY (group_id) REFERENCES Groups (id)
 );
@@ -80,10 +81,10 @@ CREATE TYPE AlbumType AS ENUM ('cингл', 'двойной альбом', 'ст
 CREATE TABLE Album
 (
     id       SERIAL,
-    type    AlbumType default NULL,
+    type     AlbumType default NULL,
     genre_id INT NOT NULL,
     group_id INT NOT NULL,
-    size INT,
+    size     INT,
     PRIMARY KEY (id),
     CHECK ( size > 0 ),
     FOREIGN KEY (genre_id) REFERENCES Genre (id),
@@ -96,15 +97,14 @@ CREATE TABLE Album
 -- ссылка на альбом N:1
 CREATE TABLE Track
 (
-    id       SERIAL,
+    id       SERIAL PRIMARY KEY,
     name     TEXT NOT NULL,
     duration INT default NULL,
-    album_id INT NOT NULL,
-    PRIMARY KEY (id),
+    album_id INT  NOT NULL,
+    UNIQUE (name, album_id),
     CHECK ( duration > 0 ),
     FOREIGN KEY (album_id) REFERENCES Album (id)
 );
-
 
 
 -- справочник с ролями музыкантов при записи
@@ -156,12 +156,12 @@ CREATE TABLE StaffToAlbum
     staff_role_id INT NOT NULL,
     primary key (staff_id, album_id),
     FOREIGN KEY (staff_role_id) REFERENCES StaffRole (id),
-    FOREIGN KEY (album_id) REFERENCES Album(id),
-    FOREIGN KEY (staff_id) REFERENCES Staff(id)
+    FOREIGN KEY (album_id) REFERENCES Album (id),
+    FOREIGN KEY (staff_id) REFERENCES Staff (id)
 );
 
 -- справочник с носителями для альбомов
-CREATE TABLE Carrier_types
+CREATE TABLE CarrierTypes
 (
     id   SERIAL,
     name TEXT NOT NULL UNIQUE,
@@ -177,7 +177,8 @@ CREATE TABLE AlbumInRegion
     region_id  INT  NOT NULL,
     carrier_id INT  NOT NULL,
     album_name TEXT NOT NULL,
-    PRIMARY KEY (album_id, region_id),
+    PRIMARY KEY (album_id, region_id, carrier_id),
     FOREIGN KEY (album_id) REFERENCES ALBUM (id),
-    FOREIGN KEY (region_id) REFERENCES Region (id)
+    FOREIGN KEY (region_id) REFERENCES Region (id),
+    FOREIGN KEY (carrier_id) REFERENCES CarrierTypes (id)
 );
