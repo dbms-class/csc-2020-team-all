@@ -80,7 +80,7 @@ CREATE TABLE driver (
     Id SERIAL PRIMARY KEY,
     Surname TEXT NOT NULL,
     Name TEXT NOT NULL,
-    Patronymic TEXT NOT NULL
+    Patronymic TEXT
 );
 
 
