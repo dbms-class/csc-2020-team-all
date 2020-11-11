@@ -175,10 +175,18 @@ CREATE TABLE AlbumInRegion
 (
     album_id   INT  NOT NULL,
     region_id  INT  NOT NULL,
-    carrier_id INT  NOT NULL,
     album_name TEXT NOT NULL,
-    PRIMARY KEY (album_id, region_id, carrier_id),
+    PRIMARY KEY (album_id, region_id),
     FOREIGN KEY (album_id) REFERENCES ALBUM (id),
     FOREIGN KEY (region_id) REFERENCES Region (id),
+);
+
+-- распространение альбома в каком-то регионе отношение N:M
+-- в каждом регионе альбом может распространяться разными способами
+CREATE TABLE AlbumCarrierInRegion 
+(
+    album_info_id INT NOT NULL,
+    carrier_id INT NOT NULL,
+    UNIQUE(carrier_id, album_info_id),
     FOREIGN KEY (carrier_id) REFERENCES CarrierTypes (id)
 );
