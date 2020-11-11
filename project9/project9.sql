@@ -173,20 +173,22 @@ CREATE TABLE CarrierTypes
 -- первичным ключом является пара (album_id, region_id)
 CREATE TABLE AlbumInRegion
 (
+    id SERIAL PRIMARY KEY,
     album_id   INT  NOT NULL,
     region_id  INT  NOT NULL,
     album_name TEXT NOT NULL,
-    PRIMARY KEY (album_id, region_id),
+    UNIQUE (album_id, region_id),
     FOREIGN KEY (album_id) REFERENCES ALBUM (id),
-    FOREIGN KEY (region_id) REFERENCES Region (id),
+    FOREIGN KEY (region_id) REFERENCES Region (id)
 );
 
 -- распространение альбома в каком-то регионе отношение N:M
 -- в каждом регионе альбом может распространяться разными способами
-CREATE TABLE AlbumCarrierInRegion 
+CREATE TABLE AlbumCarrierInRegion
 (
     album_info_id INT NOT NULL,
-    carrier_id INT NOT NULL,
-    UNIQUE(carrier_id, album_info_id),
-    FOREIGN KEY (carrier_id) REFERENCES CarrierTypes (id)
+    carrier_id    INT NOT NULL,
+    UNIQUE (carrier_id, album_info_id),
+    FOREIGN KEY (carrier_id) REFERENCES CarrierTypes (id),
+    FOREIGN KEY (album_info_id) REFERENCES AlbumInRegion(id)
 );
