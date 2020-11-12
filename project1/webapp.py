@@ -33,22 +33,19 @@ class App(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def commanders(self):
+    def volunteers(self):
         with create_connection(self.args) as db:
             cur = db.cursor()
-            cur.execute("SELECT id, name FROM Commander")
-            result = []
-            commanders = cur.fetchall()
-            for c in commanders:
-                result.append({"id": c[0], "name": c[1]})
-            return result
+            cur.execute("SELECT id, name FROM volunteers;")
+            volunteers = cur.fetchall()
+            return [{"id": v[0], "name": v[1]} for v in volunteers]
 
 
 def run():
     cherrypy_cors.install()
     cherrypy.config.update({
-        'server.socket_host': '0.0.0.0',
-        'server.socket_port': 8080,
+        'server.socket_host': '127.0.0.1',
+        'server.socket_port': 12345,
     })
     config = {
         '/': {
@@ -56,3 +53,7 @@ def run():
         },
     }
     cherrypy.quickstart(App(parse_cmd_line()), config=config)
+
+
+if __name__ == '__main__':
+    run()
