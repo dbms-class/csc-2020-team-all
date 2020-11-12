@@ -18,17 +18,22 @@ CREATE TABLE Buildings
     name         TEXT
 );
 
+CREATE TABLE Countries
+(
+    name TEXT NOT NULL PRIMARY KEY
+);
+
 --Национальная делегации: {id, имя_страны, id_руководитель, id_здание}
 --национальная делегация с данным id принадлежит к данной стране, с данным руководителем и штаб в данном здании.
-CREATE TABLE National_delegations
-(
+CREATE TABLE National_delegations (
     id                       SERIAL PRIMARY KEY,
     -- нет двух делегаций из одной страны
-    country_name             TEXT                          NOT NULL UNIQUE,
+    country_name             TEXT REFERENCES Countries(name) NOT NULL UNIQUE,
     -- у каждой делегации есть руководитель, 1:1
-    head_id                  INT REFERENCES Heads (id)     NOT NULL,
+    head_id                  INT REFERENCES Heads(id)        NOT NULL,
     -- у каждой делегации есть штаб, 1:1
-    headquarters_building_id INT REFERENCES Buildings (id) NOT NULL
+    headquarters_building_id INT REFERENCES Buildings(id)    NOT NULL,
+    unique (country_name, head_id, headquarters_building_id)
 );
 
 -- Волонтер: {id,  имя,  телефон}
@@ -52,6 +57,7 @@ CREATE TABLE Athletes
     name          TEXT                                     NOT NULL,
     gender        GENDER_TYPE,
     height        INT                                      NOT NULL check ( height > 0 ),
+    weight        DECIMAL(5, 2)                            NOT NULL check ( weight > 0 ),
     age           INT                                      NOT NULL check ( age > 0 ),
     -- каждый атлет ровно из одной делегации, 1:M
     delegation_id INT REFERENCES National_delegations (id) NOT NULL,
