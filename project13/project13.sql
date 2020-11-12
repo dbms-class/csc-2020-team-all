@@ -26,8 +26,8 @@ CREATE TABLE CountryTable(
 CREATE TABLE HousingTable(
   id SERIAL PRIMARY KEY,
   host_id INT REFERENCES UserTable(id), -- жильё:хозяин N:1
-  latitude NUMERIC,
-  longitude NUMERIC,
+  latitude NUMERIC CHECK(latitude BETWEEN -90 AND 90),
+  longitude NUMERIC CHECK(longitude BETWEEN -180 AND 180),
   country_id INT REFERENCES CountryTable(id), -- жильё:страна N:1
   address TEXT,
   description TEXT,
@@ -115,8 +115,8 @@ CREATE TABLE EntertainmentGenreTable(
 -- список развлечений
 CREATE TABLE EntertainmentTable(
   id SERIAL PRIMARY KEY,
-  latitude NUMERIC,
-  longitude NUMERIC,
+  latitude NUMERIC CHECK(latitude BETWEEN -90 AND 90),
+  longitude NUMERIC CHECK(longitude BETWEEN -180 AND 180),
   name TEXT NOT NULL,
   date_range_start DATE NOT NULL,
   date_range_end DATE NOT NULL,
