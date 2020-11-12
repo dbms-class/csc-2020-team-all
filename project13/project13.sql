@@ -85,7 +85,7 @@ CREATE TYPE RATING AS ENUM('1', '2', '3', '4', '5');
  
 -- информация об отзыве арендатора
 CREATE TABLE RenterReviewTable(
-  application_id INT REFERENCES ApplicationTable(id),
+  application_id INT NOT NULL REFERENCES ApplicationTable(id),
   review_text TEXT,
   location_rating RATING NOT NULL,
   cleanness_rating RATING NOT NULL,
@@ -95,7 +95,7 @@ CREATE TABLE RenterReviewTable(
  
 -- информация об отзыве арендодателя
 CREATE TABLE HostReviewTable(
-  application_id INT REFERENCES ApplicationTable(id),
+  application_id INT NOT NULL REFERENCES ApplicationTable(id),
   review_text TEXT,
   living_rating RATING NOT NULL
 );
