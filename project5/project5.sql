@@ -34,6 +34,7 @@ number_of_platforms INT NOT NULL CHECK(number_of_platforms >= 1));
 --Данный маршрут исполняется данным типом ТС между данными двумя остановками
 CREATE TABLE transport_route(
 id SERIAL PRIMARY KEY,
+route INT UNIQUE NOT NULL,
 transport_type_id INT NOT NULL references transport_type, --ссылаемся на тип транспорта в таблице типов транспорта 1:N
 first_stop_id INT NOT NULL references transport_stop, -- есть только одна первая остановка с таким айди 1:N, но остановки могут быть разные у разных маршрутов
 last_stop_id INT NOT NULL references transport_stop); -- есть только одна последняя остановка с таким айди 1:N, но остановки могут быть разные у разных маршрутов
