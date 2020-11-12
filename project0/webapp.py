@@ -2,7 +2,6 @@
 
 ## Веб сервер
 import cherrypy
-import cherrypy_cors
 
 from connect import parse_cmd_line
 from connect import create_connection
@@ -23,10 +22,13 @@ class App(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def planets(self):
+    def planets(self, planet_id = None):
         with create_connection(self.args) as db:
             cur = db.cursor()
-            cur.execute("SELECT id, name FROM Planet P")
+            if planet_id is None:
+              cur.execute("SELECT id, name FROM Planet P")
+            else:
+              cur.execute("SELECT id, name FROM Planet WHERE id= %s", planet_id)
             result = []
             planets = cur.fetchall()
             for p in planets:
@@ -46,16 +48,9 @@ class App(object):
             return result
 
 
-def run():
-    cherrypy_cors.install()    
-    cherrypy.config.update({
-      'server.socket_host': '0.0.0.0',
-      'server.socket_port': 8080,
-    })
-    config = {
-        '/': {
-            'cors.expose.on': True,
-        },
-    }
-    cherrypy.quickstart(App(parse_cmd_line()), config=config)
+cherrypy.config.update({
+  'server.socket_host': '0.0.0.0',
+  'server.socket_port': 8080,
+})
+cherrypy.quickstart(App(parse_cmd_line()))
 

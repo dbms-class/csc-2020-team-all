@@ -12,30 +12,30 @@ def index():
 <body>
 <form class="col-6">
     <div class="form-group">
-        <label for="countrySelect">Страна</label>
-        <select class="form-control" id="countrySelect">
+        <label for="planetSelect">Планета</label>
+        <select class="form-control" id="planetSelect">
         </select>
     </div>
     <div class="form-group">
-        <label for="volunteerSelect">Планета</label>
-        <select class="form-control" id="volunteerSelect">
+        <label for="commanderSelect">Капитан</label>
+        <select class="form-control" id="commanderSelect">
         </select>
     </div>
 </form>
 <script lang="js">
     function loadData() {
-        const countrySelect = $('#countrySelect');
-        $.getJSON('https://test-python.dmitrybarashev.repl.co//countries', function (countries) {
+        const planetSelect = $('#planetSelect');
+        $.getJSON('/planets', function (countries) {
            countries.forEach(function (value) {
                $("<option>").text(value.name).attr("value", value.id)
-                   .appendTo(countrySelect);
+                   .appendTo(planetSelect);
            })
         });
-        const volunteerSelect = $('#volunteerSelect');
-        $.getJSON('https://test-python.dmitrybarashev.repl.co/volunteers', function (volunteers) {
-            volunteers.forEach(function (value) {
+        const commanderSelect = $('#commanderSelect');
+        $.getJSON('/commanders', function (commanders) {
+            commanders.forEach(function (value) {
                 $("<option>").text(value.name).attr("value", value.id)
-                    .appendTo(volunteerSelect);
+                    .appendTo(commanderSelect);
             });
         });
     }

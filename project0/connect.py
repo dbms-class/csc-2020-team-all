@@ -18,11 +18,11 @@ def parse_cmd_line():
     parser = argparse.ArgumentParser(description='Эта программа вычисляет 2+2 при помощи реляционной СУБД')
     parser.add_argument('--pg-host', help='PostgreSQL host name', default='localhost')
     parser.add_argument('--pg-port', help='PostgreSQL port', default=5432)
-    parser.add_argument('--pg-user', help='PostgreSQL user', default='postgres')
+    parser.add_argument('--pg-user', help='PostgreSQL user', default='')
     parser.add_argument('--pg-password', help='PostgreSQL password', default='')
-    parser.add_argument('--pg-database', help='PostgreSQL database', default='postgres')
+    parser.add_argument('--pg-database', help='PostgreSQL database', default='')
     parser.add_argument('--sqlite-file', help='SQLite3 database file. Type :memory: to use in-memory SQLite3 database',
-                        default=None)
+                        default='sqlite.db')
     return parser.parse_args()
 
 
