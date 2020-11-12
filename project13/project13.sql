@@ -74,7 +74,8 @@ CREATE TABLE PriceTable(
   date_range_start DATE NOT NULL,
   date_range_end DATE NOT NULL,
   cost INT CHECK(cost >= 0),
-  PRIMARY KEY(housing_id, date_range_start, date_range_end)
+  PRIMARY KEY(housing_id, date_range_start, date_range_end),
+  CHECK(date_range_start <= date_range_end)
 );
 -- других ключей нет
  
