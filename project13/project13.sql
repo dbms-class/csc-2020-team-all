@@ -8,7 +8,7 @@ CREATE TABLE UserTable(
   surname TEXT NOT NULL,
   email TEXT UNIQUE, -- чтобы можно было авторизовываться по адресу электронной почты, и он был разным у разных пользователей
   tel_number TEXT NOT NULL UNIQUE, -- чтобы можно было авторизовываться по номеру телефона, и он был разным у разных пользователей
-  sex SEX,
+  sex SEX NOT NULL,
   date_of_birth DATE,
   photo_file_path TEXT
 );
