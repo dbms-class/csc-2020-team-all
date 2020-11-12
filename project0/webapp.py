@@ -23,29 +23,61 @@ class App(object):
         return index()
 
     @cherrypy.expose
-    @cherrypy.tools.json_out()
-    def planets(self):
+    def drop(self, table):
         with create_connection(self.args) as db:
             cur = db.cursor()
-            cur.execute("SELECT id, name FROM Planet P")
-            result = []
-            planets = cur.fetchall()
-            for p in planets:
-                result.append({"id": p[0], "name": p[1]})
-            return result
+            cur.execute(f'DROP TABLE {table}')
+        return 'Done'
+
+
+    @cherrypy.expose
+    def fill(self):
+        script = ''
+        with open('../project8/project8.sql') as ddl:
+            script = '\n'.join(list(map(str.rstrip, ddl.readlines())))
+        if script == '':
+            return 'Failed to read file'
+        with create_connection(self.args) as db:
+            cur = db.cursor()
+            cur.execute(script)
+        return 'Done'
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def commanders(self):
+    def apartments(self, country_id=None):
         with create_connection(self.args) as db:
             cur = db.cursor()
-            cur.execute("SELECT id, name FROM Commander")
-            result = []
-            commanders = cur.fetchall()
-            for c in commanders:
-                result.append({"id": c[0], "name": c[1]})
-            return result
+            query = f'SELECT id, name, address, country_id FROM Apartments'
+            if country_id != None:
+                query += f' WHERE country_id = {country_id}'
+            cur.execute(query)
+            return list(map(
+                lambda apartment: {
+                    'id': apartment[0], 'name': apartment[1],
+                    'address': apartment[2], 'country_id': apartment[3]
+                },
+                cur.fetchall()
+            ))
 
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def countries(self):
+        with create_connection(self.args) as db:
+            cur = db.cursor()
+            query = 'SELECT id, name FROM Countries'
+            cur.execute(query)
+            return list(map(
+                lambda country: {'id': country[0], 'name': country[1]},
+                cur.fetchall()
+            ))
+
+    @cherrypy.expose
+    def update_price(self, apartment_id, week, price):
+        with create_connection(self.args) as db:
+            cur = db.cursor()
+            query = f'UPDATE Prices SET price = {price} WHERE apartment_id = {apartment_id} and week = {week}'
+            cur.execute(query)
+        return 'Done'
 
 def run():
     cherrypy_cors.install()

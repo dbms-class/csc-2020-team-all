@@ -30,12 +30,13 @@ CREATE TABLE Countries
     tax  DECIMAL(3, 2) NOT NULL CHECK (tax >= 0)
 );
 
--- Жильё с данным id имеет: id страны (country_id), адрес (address), gps координаты (gps), описание (description), количество комнат (room_count), количество кроватей (bed_count), допустимое количество жильцов (max_roomates)
+-- Жильё с данным id имеет: id страны (country_id), name (название), адрес (address), gps координаты (gps), описание (description), количество комнат (room_count), количество кроватей (bed_count), допустимое количество жильцов (max_roomates)
 -- Страна и адрес - обязательные поля
 -- Жилье задается только id, другие поля не могут его однозначно определить
 CREATE TABLE Apartments
 (
     id             SERIAL PRIMARY KEY,
+    name           TEXT NOT NULL,
     -- внешний ключ на таблицу Countries, связь many-to-one (N:1)
     country_id     INT  NOT NULL references Countries (id),
     -- внешний ключ на таблицу Users, связь many-to-one (N:1)
