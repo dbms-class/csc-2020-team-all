@@ -97,7 +97,7 @@ CREATE TABLE Record(
     track_id INT, 
     musician_id INT, 
     role_id INT NOT NULL,
-    PRIMARY KEY (track_id, musician_id,role_id),
+    PRIMARY KEY (track_id, musician_id, role_id),
     FOREIGN KEY(track_id) REFERENCES Track(id),
     FOREIGN KEY(musician_id) REFERENCES Musician(id),
     FOREIGN KEY(role_id) REFERENCES MusicianRoles(id)
@@ -178,12 +178,21 @@ CREATE TABLE Distributions(
     id SERIAL, 
     album_id INT not null,
     region_id INT not null, 
-    carrier_type Carrier NOT NULL, 
+    
     local_name TEXT NOT NULL CHECK(char_length(local_name) > 0), 
     PRIMARY KEY(id),
     -- В каждый регион один альбом может быть поставлен только один раз на конкретном носителе
-    UNIQUE(album_id, region_id, carrier_type),
+    UNIQUE(album_id, region_id),
     FOREIGN KEY(album_id ) REFERENCES Album(id),
     FOREIGN KEY(region_id ) REFERENCES Region(id)
 );
 -- других ключей нет
+
+
+---Связь между диструбуцией альбомов регионе и носителем
+CREATE TABLE DistributionsToCarrier(
+    distribution_id Int not null,
+    FOREIGN KEY(distribution_id) REFERENCES Distributions(id),
+    carrier_type Carrier NOT NULL,
+    UNIQUE(distribution_id,carrier_type) 
+);
