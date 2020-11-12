@@ -1,23 +1,34 @@
 
 -- Функции объектов
-CREATE TYPE function AS ENUM ('Жилое помещение', 'Кафе', 'Спорт. площадка', 'Бассейн', 'Штаб делегации', 'Столовая');
+CREATE TYPE object_type AS ENUM ('Жилое помещение', 'Кафе', 'Спорт. площадка', 'Бассейн', 'Штаб делегации', 'Столовая');
 
 -- Олимпийские объекты:
 --  id SERIAL - ключ для внешних ссылок
 --  address - адрес объекта (адрес до дома/строения)
---  function - функция объекта (ссылается на список известных функций)
+--  object_type - функция объекта (ссылается на список известных функций)
 --  name - опциональное имя объекта
 --  По одному адресу не более одного объекта с одинаковой функцией
 
 CREATE TABLE object_ (
     id SERIAL, 
     address TEXT NOT NULL,
-    function FUNCTION NOT NULL, 
-    name TEXT NOT NULL,
+    object_type OBJECT_TYPE NOT NULL, 
+    name TEXT,
 
     -- Ключи
 	PRIMARY KEY(id)
 	-- Других ключей нет
+);
+
+-- Страны (думаю смысл понятен и можно не перечислять все страны)
+CREATE TYPE country AS ENUM ('Россия', 'Китай', 'Швеция');
+
+-- Информация о руководителях
+CREATE TABLE leader(
+    id SERIAL PRIMARY KEY,
+    leader_name TEXT NOT NULL,
+    -- Один телефон принадлежит только одному руководителю
+    leader_telephone TEXT NOT NULL UNIQUE
 );
 
 -- Суррогатным основным ключом выступает id (для организации внешних ссылок)
@@ -27,47 +38,57 @@ CREATE TABLE object_ (
 CREATE TABLE delegation(
     id SERIAL PRIMARY KEY,
     -- У одной страны только одна национальная делегация
-	country TEXT NOT NULL UNIQUE,
-    -- В одном объекте может жить только одна делегация
-	house_id INT NOT NULL UNIQUE,
+	country COUNTRY NOT NULL UNIQUE,
+    -- В одном из объектов должен быть штаб делегации
+	house_id INT NOT NULL,
 	name TEXT,
-    -- У делегации только один руководитель
+    -- Руководитель может принадлежать только одной делегации
 	leader_id INT NOT NULL UNIQUE,
-	leader_name TEXT NOT NULL,
-    -- Один телефон принадлежит только одному руководителю
-	leader_telephone TEXT NOT NULL UNIQUE,
-    
     -- Других ключей нет
 
-    -- Связь 1:1 между делегациями и объектами. В одном объекте может располагаться только одна делегация и наоборот.
-	FOREIGN KEY(house_id) REFERENCES object_(id)
+    -- Связь N:1 между делегациями и объектами. В одном объекте могут распологаться разные делегации.
+	FOREIGN KEY(house_id) REFERENCES object_(id),
+	
+    -- Связь 1:1 между делегациями и руководителями. У одной делегации может быть только один руководитель и наоборот.
+	FOREIGN KEY(leader_id) REFERENCES leader
+);
+
+-- Волонтер определяется своей id картой и при этом волонтеры должны иметь уникальные телефоны.
+-- Может быть неконсистентность, что id волонтера совпадает с id спортсмена.
+CREATE TABLE volunteer(
+    card_id VARCHAR(5) NOT NULL,
+    name TEXT NOT NULL,
+    -- Один телефон принадлежит только одному волонтеру
+	telephone TEXT NOT NULL UNIQUE,
+    -- card_id может принадлежать только одному волонтеру
+	PRIMARY KEY(card_id)
+    -- Других ключей нет
 );
 
 -- Служебная таблица для пола
 CREATE TYPE sex AS ENUM('Мужской', 'Женский', 'Custom');
 
 -- Карта регистрации спортсмена определяет остальные его атрибуты (TEXT, так как может быть leading zero)
--- имя спортсмена и его опциональные атрибуты (возраст, вес, рост и т.д.)
+-- имя спортсмена и его атрибуты (возраст, вес(кг), рост(см) в и т.д.)
 -- Внешние ссылки на id делегации и id помещения (inf <-> 1 в обоих случаях)
 -- Сейчас может возникнуть неконсисентность, что house_id оказался не id жилого дома.
 CREATE TABLE sportsman(
     card_id VARCHAR(5) NOT NULL,
     name TEXT NOT NULL, 
-    age SMALLINT NOT NULL, 
+    age SMALLINT NOT NULL,
     weight SMALLINT NOT NULL, 
     height SMALLINT NOT NULL, 
     sex SEX NOT NULL,
-
-	delegation_id INT NOT NULL, 
+    delegation_id INT NOT NULL, 
     house_id INT NOT NULL,
+    volunteer_id TEXT,
 	
 	-- Ключи
     --card_id может принадлежать только одному спортсмену
 	PRIMARY KEY(card_id),
-	-- Спортсмен может жить только в одном объекте.
-	UNIQUE(card_id, house_id),
-    -- Каждый спортсмен может быть только в одной делегации
-    UNIQUE(card_id, delegation_id),
+	
+    -- Связь 1:N между волонтерами и спортсменами. Один волонтер может обслуживать много спортсменов.
+	FOREIGN KEY(volunteer_id) REFERENCES volunteer(card_id),
     -- Других ключей нет
 	
 	-- Связь N:1 между спортсмена и делегациями. Каждый спортсмен может быть только в одной делегации. В каждой делегации может быть много спортсменов.
@@ -82,15 +103,18 @@ CREATE TABLE sportsman(
 
 
 --------------------------------------------- SPORTS ----------------------------------------------------------------
--- Служебная табличка с id видов спорта
-CREATE TYPE sport AS ENUM('Фехтование', 'Баскетбол', 'Плавание', 'Футбол');
+-- Виды спорта
+CREATE TABLE sport (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL
+);
 
 -- Отношение между спортсменами и
 -- видами спорта в которых они участвуют
 -- отношение inf <-> inf
-CREATE TABLE SportsmanToSport(
+CREATE TABLE sportsman_to_sport(
     sportsman_id TEXT NOT NULL, 
-    sport SPORT NOT NULL,
+    sport INT NOT NULL REFERENCES sport,
 
     -- Спортсмен не может дважды участвовать в одном виде спорта.
 	UNIQUE(sportsman_id, sport),
@@ -103,16 +127,16 @@ CREATE TABLE SportsmanToSport(
 -- Отношение между объектами и
 -- видами спорта для которых они предназначены
 -- отношение inf <-> inf
-CREATE TABLE object_ToSport(
-    object__id INT NOT NULL, 
+CREATE TABLE object_to_sport(
+    object_id INT NOT NULL, 
     sport SPORT NOT NULL,
 
     -- Вид спорта не может дважды подходить одному объекту.
-	UNIQUE(object__id, sport),
+	UNIQUE(object_id, sport),
 	-- Других ключей нет
 
     -- Связь N:M между видами спорта и объектами. Один вид спорта может проводиться в многих объектах. В одном объекте могут проходить разные виды спорта.
-	FOREIGN KEY(object__id) REFERENCES object_(id)
+	FOREIGN KEY(object_id) REFERENCES object_(id)
 );
 
 -- Соревнование однозначно задается своим названием
@@ -122,24 +146,30 @@ CREATE TABLE competition(
     id SERIAL, 
     -- С заданным именем может быть только одно соревнование
     name TEXT NOT NULL UNIQUE,
-	object__id INT NOT NULL,
-    date TIMESTAMP NOT NULL, 
+    object_id INT NOT NULL,
+    date DATE NOT NULL, 
+    time TIME(0) NOT NULL,
     sport SPORT,
 
 	PRIMARY KEY(id),
     -- В одном и тоже время в одном объекте не могу проводиться разные соревнования
-	UNIQUE(object__id, date),
+	UNIQUE(object_id, date),
 	-- Других ключей нет
     
     -- Связь N:M между видами соревни объектами. Один вид спорта может проводиться в многих объектах. В одном объекте могут проходить разные виды спорта.
-    FOREIGN KEY(object__id) REFERENCES object_(id)
+    FOREIGN KEY(object_id) REFERENCES object_(id)
 );
 
+-- Тип медали
+CREATE TYPE medal AS ENUM('Золото', 'Серебро', 'Бронза');
 
 -- Связь inf <-> inf между соревнованиями и спортсменами
-CREATE TABLE SportsmanToCompetition(
+CREATE TABLE sportsman_to_competition(
     competition_id INT, 
     sportsman_id TEXT,
+    medal MEDAL NOT NULL,
+    -- В одном соревновании не может быть выдано две одинаковые медали
+    UNIQUE(competition_id, medal),
     -- Между спортсменом и соревнованием существует только одна связь.
 	UNIQUE(competition_id, sportsman_id),
     -- Других ключей нет
@@ -150,59 +180,14 @@ CREATE TABLE SportsmanToCompetition(
 	FOREIGN KEY(sportsman_id) REFERENCES sportsman(card_id)
 );
 
-
--- Тип медали
-CREATE TYPE medal_type AS ENUM('Золото', 'Серебро', 'Бронза');
-
--- Записи о выигранных медалях
-CREATE TABLE medal(
-    competitions_id INT NOT NULL, 
-    sportsman_id TEXT NOT NULL, 
-    medal MEDAL_TYPE NOT NULL,
-    -- В одном соревновании не может быть выдано две одинаковые медали
-    UNIQUE(competitions_id, medal),
-    -- Каждый спортсмен может получить только одну медаль в одном соревновании.
-	UNIQUE(competitions_id, sportsman_id),
-    -- Других ключей нет
-    
-    -- Связь N:M между видами медалей и соревнованиями. Один вид медали может даваться в разных соревнованиях. В одном соревновании могут быть выданы разные виды медалей
-	FOREIGN KEY(competitions_id) REFERENCES competition(id),
-    -- Связь N:M между видами медалей и спортсменами. Один вид медали может даваться разным спортсменам. Одному спортсмену в разных соревнованиях могут быть выданы разные виды медалей.
-	FOREIGN KEY(sportsman_id) REFERENCES sportsman(card_id)
-);
-
--- Волонтер определяется своей id картой и при этом волонтеры должны иметь уникальные телефоны.
--- Может быть неконсистентность, что id волонтера совпадает с id спортсмена.
-CREATE TABLE volunteer(
-    card_id TEXT NOT NULL,
-    name TEXT NOT NULL,
-    -- Один телефон принадлежит только одному волонтеру
-	telephone TEXT NOT NULL UNIQUE,
-    -- card_id может принадлежать только одному волонтеру
-	PRIMARY KEY(card_id)
-    -- Других ключей нет
-);
-
--- Отношение 1 <-> inf между волонтерами и спортсменами
-
-CREATE TABLE VolunteerToSportsman(
-    volunteer_id TEXT,
-    -- Каждому спортсмену назначается не более одного волонтера.
-    sportsman_id TEXT NOT NULL UNIQUE,
-    -- Других ключей нет
-
-    -- Связь 1:N между волонтерами и спортсменами. Один волонтер может обслуживать много спортсменов.
-	FOREIGN KEY(volunteer_id) REFERENCES volunteer(card_id),
-	FOREIGN KEY(sportsman_id) REFERENCES sportsman(card_id)
-);
-
 -- Отношение inf <-> 1 между заданиями и волонтерами
 -- Задание содержит id волонтера, дату выполнения и текстовое описание.
-CREATE TABLE VolunteerTask(
+CREATE TABLE volunteer_task(
     id SERIAL,
 	volunteer_id TEXT NOT NULL,
 	task_description TEXT NOT NULL,
-	date TIMESTAMP NOT NULL,
+    date DATE NOT NULL, 
+    time TIME(0) NOT NULL,
     -- id может принадлежать только одной задаче
 	PRIMARY KEY(id),
     -- Волонтер не может быть назначен больше чем на одно задание в определенную дату.
@@ -229,20 +214,13 @@ CREATE TABLE vehicle(
 
 -- Информация о заданиях к транспортным средством
 -- Уникальная пара id транспортного средства и id задания.
-CREATE TABLE TasksToVehicle(
+CREATE TABLE tasks_to_vehicle(
     -- Одно транспортное средство может быть отправлено на одно задание не более одного раза
     task_id INT NOT NULL UNIQUE, 
     vehicle_id TEXT NOT NULL,
     -- Других ключей нет
     
     -- Связь 1:N между транспортными средствами и заданиями. Одно транспортное средство может быть отправлено на разные задания.
-	FOREIGN KEY(task_id) REFERENCES VolunteerTask(id),
+	FOREIGN KEY(task_id) REFERENCES volunteer_task(id),
 	FOREIGN KEY(vehicle_id) REFERENCES vehicle(plate_id)
 );
-
-
-
-
-
-
-
