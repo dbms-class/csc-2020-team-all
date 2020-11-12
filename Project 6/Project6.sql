@@ -1,10 +1,12 @@
 CREATE TABLE Facilities_aims(aim_facility TEXT PRIMARY KEY);
 
-CREATE TABLE Countries(country TEXT PRIMARY KEY);
+CREATE TABLE Countries(
+	id_country SERIAL PRIMARY KEY,
+	country TEXT);
 
 --волонтер(имя, телефон, карточка-идентификатор )
 CREATE TABLE Volonteers(
-	id_volonteer INT PRIMARY KEY,    -- уникальный ID волонтера
+	id_volonteer SERIAL PRIMARY KEY,    -- уникальный ID волонтера
 	name_volonteer TEXT NOT NULL , -- не допускаем волонтеров без имени
 	tel TEXT CHECK (tel::TEXT ~ '^(\\d+-?\\d+)*$'::TEXT) -- проверка на формат записи телефона
 );
@@ -42,7 +44,7 @@ CREATE TABLE Delegation(
 
 -- Описание спортсмена (его номер карты, имя, пол, рост, вес, дата рождения, делегация, в которую он входит, прикрепленный к нему волонтер и дом, в котором он живет)
 CREATE TABLE Athlete(
-	id_athlete INT PRIMARY KEY,  -- не допускаем, чтобы у спортсмена не было карточки или повторяющиеся номеру у карточек
+	id_athlete SERIAL PRIMARY KEY,  -- не допускаем, чтобы у спортсмена не было карточки или повторяющиеся номеру у карточек
 	name_athlete TEXT NOT NULL,          -- не допускаем, чтобы не было спортсмена без имени 
 	sex sex, --созданный тип (только 3 возможных значения)
 	height NUMERIC CHECK(height > 0), 
