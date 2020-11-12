@@ -104,7 +104,7 @@ CREATE TABLE HostReviewTable(
 -- справочник жанров событий
 CREATE TABLE EntertainmentGenreTable(
   id SERIAL PRIMARY KEY,
-  name TEXT UNIQUE -- название жанра идентифицирует этот жанр
+  name TEXT NOT NULL UNIQUE -- название жанра идентифицирует этот жанр
 );
 -- других ключей нет
  
