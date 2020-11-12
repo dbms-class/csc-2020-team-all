@@ -84,7 +84,7 @@ CREATE TABLE MusicianRoles(
 -- Связь M:N между треками и музыкантами
 -- Id трека, id музыканта, роль музыканта на треке
 -- один музыкант может исполнять различные роли на одном треке
-CREATE TABLE Record(
+CREATE TABLE MusicianToTrack(
     track_id INT,
     musician_id INT,
     role_id INT,
