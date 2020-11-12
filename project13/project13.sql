@@ -84,11 +84,8 @@ CREATE TYPE RATING AS ENUM('1', '2', '3', '4', '5');
  
 -- информация об отзыве арендатора
 CREATE TABLE RenterReviewTable(
-  id SERIAL PRIMARY KEY,
-  renter_id INT REFERENCES UserTable(id), -- отзыв:арендатор N:1
-  housing_id INT REFERENCES HousingTable(id), -- отзыв:жильё N:1
+  application_id INT REFERENCES ApplicationTable(id),
   review_text TEXT,
-  date_of_departure DATE,
   location_rating RATING,
   cleanness_rating RATING,
   hospitality_rating RATING
@@ -97,9 +94,7 @@ CREATE TABLE RenterReviewTable(
  
 -- информация об отзыве арендодателя
 CREATE TABLE HostReviewTable(
-  id SERIAL PRIMARY KEY,
-  renter_id INT REFERENCES UserTable(id),
-  housing_id INT REFERENCES HousingTable(id),
+  application_id INT REFERENCES ApplicationTable(id),
   review_text TEXT,
   living_rating RATING
 );
