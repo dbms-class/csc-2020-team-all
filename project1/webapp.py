@@ -40,6 +40,16 @@ class App(object):
             volunteers = cur.fetchall()
             return [{"id": v[0], "name": v[1]} for v in volunteers]
 
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def register(self, sportsman, country, volunteer_id):
+        pass
+        # with create_connection(self.args) as db:
+        #     cur = db.cursor()
+        #     cur.execute("SELECT id, name FROM volunteers;")
+        #     volunteers = cur.fetchall()
+        #     return [{"id": v[0], "name": v[1]} for v in volunteers]
+
 
 def run():
     cherrypy_cors.install()

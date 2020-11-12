@@ -34,7 +34,7 @@ CREATE TABLE National_delegations (
     head_id                  INT REFERENCES Heads(id)        NOT NULL,
     -- у каждой делегации есть штаб, 1:1
     headquarters_building_id INT REFERENCES Buildings(id)    NOT NULL,
-    unique (country_name, head_id, headquarters_building_id)
+    unique (country_id, head_id, headquarters_building_id)
 );
 
 -- Волонтер: {id,  имя,  телефон}
@@ -62,10 +62,14 @@ CREATE TABLE Athletes
     age           INT                                      NOT NULL check ( age > 0 ),
     -- каждый атлет ровно из одной делегации, 1:M
     delegation_id INT REFERENCES National_delegations (id) NOT NULL,
-    -- каждый атлет живет в одном здании, 1:M
-    residence_id  INT REFERENCES Buildings (id)            NOT NULL,
     -- за каждым атлетом закреплен волонтер, 1:M
     volunteer_id  INT REFERENCES Volunteers (id)           NOT NULL
+);
+
+CREATE TABLE Occupation
+(
+    athlete_id  INT REFERENCES Athletes(id)  NOT NULL UNIQUE,
+    building_id INT REFERENCES Buildings(id) NOT NULL
 );
 
 --Вид спорта: {id, название}
@@ -151,8 +155,6 @@ CREATE TABLE Vehicles
     capacity            INT  NOT NULL CHECK (capacity > 0)
 );
 
-
-
 -- Задание: {id, дата, время, текстовое описание, id_транспортное средство(опциональный)}
 -- Задание с данным id имеет следующую дату, время, текстовое описание, и опционально id транспортного средства.
 CREATE TABLE Volunteer_tasks
@@ -174,3 +176,6 @@ CREATE TABLE Assignees
     -- одно задание нельзя принять дважды одним волонтером
     unique (task_id, volunteer_id)
 );
+
+select *
+from Volunteers;
