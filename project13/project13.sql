@@ -11,7 +11,8 @@ CREATE TABLE UserTable(
   sex SEX,
   date_of_birth DATE,
   photo_file_path TEXT,
-  is_registered BOOLEAN NOT NULL);
+  is_registered BOOLEAN NOT NULL
+);
 -- других ключей нет
  
 -- Справочник стран с указанием фиксированной комиссии
