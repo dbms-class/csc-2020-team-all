@@ -72,7 +72,7 @@ CREATE TABLE PriceTable(
   housing_id INT NOT NULL REFERENCES HousingTable,
   date_range_start DATE NOT NULL,
   date_range_end DATE NOT NULL,
-  cost INT CHECK(cost >= 0),
+  cost NUMERIC CHECK(cost >= 0),
   PRIMARY KEY(housing_id, date_range_start, date_range_end),
   CHECK(date_range_start <= date_range_end)
 );
