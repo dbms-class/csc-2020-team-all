@@ -25,12 +25,12 @@ CREATE TABLE CountryTable(
 -- Жильё в аренду номер id с данными параметрами
 CREATE TABLE HousingTable(
   id SERIAL PRIMARY KEY,
-  host_id NOT NULL INT REFERENCES UserTable(id), -- жильё:хозяин N:1
-  latitude NOT NULL NUMERIC CHECK(latitude BETWEEN -90 AND 90),
-  longitude NOT NULL NUMERIC CHECK(longitude BETWEEN -180 AND 180),
-  country_id NOT NULL INT REFERENCES CountryTable(id), -- жильё:страна N:1
-  address NOT NULL TEXT,
-  description NOT NULL TEXT,
+  host_id INT NOT NULL REFERENCES UserTable(id), -- жильё:хозяин N:1
+  latitude NUMERIC NOT NULL CHECK(latitude BETWEEN -90 AND 90),
+  longitude NUMERIC NOT NULL CHECK(longitude BETWEEN -180 AND 180),
+  country_id INT NOT NULL REFERENCES CountryTable(id), -- жильё:страна N:1
+  address TEXT NOT NULL,
+  description TEXT NOT NULL,
   room_count INT NOT NULL CHECK(room_count >= 0),
   bed_count INT NOT NULL CHECK(bed_count >= 0),
   max_people INT NOT NULL CHECK(max_people >= 0),
