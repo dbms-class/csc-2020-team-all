@@ -55,7 +55,7 @@ CREATE TABLE route (
 CREATE TABLE time_table (
     vehicle_id INT REFERENCES vehicle(id),
     route_id INT REFERENCES route(id),
-    is_weekend BOOl NOT NULL,
+    is_weekend BOOL NOT NULL,
     stop_id INT REFERENCES stop(id),
     platform_number INT CHECK(platform_number > 0) NOT NULL,
     arrival_time TIMESTAMP NOT NULL,
@@ -101,7 +101,6 @@ CREATE TABLE control (
 -- N:M одному наряду соответствует много остановок, одной остановке - много нарядов
     work_order_id INT REFERENCES work_order(id),
     stop_id INT REFERENCES stop(id),
-    appointed_time TIMESTAMP NOT NULL,
     real_time TIMESTAMP NOT NULL,
 );
 
