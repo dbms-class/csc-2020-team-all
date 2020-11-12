@@ -33,7 +33,7 @@ CREATE TABLE HousingTable(
   room_count INT NOT NULL CHECK(room_count >= 0),
   bed_count INT NOT NULL CHECK(bed_count >= 0),
   max_people INT NOT NULL CHECK(max_people >= 0),
-  cleaning_cost NOT NULL NUMERIC CHECK(cleaning_cost >= 0)
+  cleaning_cost NUMERIC NOT NULL CHECK(cleaning_cost >= 0)
 );
 -- других ключей нет
  
