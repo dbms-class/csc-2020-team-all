@@ -42,10 +42,11 @@ CREATE TABLE vehicle (
 
 CREATE TABLE route (
 -- Связь 1:M у одного маршрута одна конечная остановка, у одной конечной остановки много маршрутов
-    id INT PRIMARY KEY,
+    id INT NOT NULL,
     type model_type NOT NULL,
     start_id INT REFERENCES stop(id) NOT NULL,
     end_id INT REFERENCES stop(id) NOT NULL,
+    UNIQUE(id, type)
 );
 
 
@@ -53,14 +54,15 @@ CREATE TABLE route (
 --Расписание(тс, номер маршрута, день недели, время прибытия, номер остановки, платформа, выходной или рабочий день) (то есть время до минуты уникальное)
 
 CREATE TABLE time_table (
-    vehicle_id INT REFERENCES vehicle(id) NOT NULL,
-    route_id INT REFERENCES route(id) NOT NULL,
+    route_id INT NOT NULL,
+    vehicle_type model_type NOT NULL,
     is_weekend BOOL NOT NULL,
     stop_id INT REFERENCES stop(id) NOT NULL,
     platform_number INT CHECK(platform_number > 0) NOT NULL,
     arrival_hour SMALLINT NOT NULL CHECK(arrival_hour BETWEEN 0 AND 23),
     arrival_minute SMALLINT NOT NULL CHECK(arrival_minute BETWEEN 0 AND 59),
-    UNIQUE(stop_id, platform_number, arrival_time)
+    FOREIGN KEY (route_id, vehicle_type) REFERENCES route (id, type),
+    UNIQUE(stop_id, platform_number, arrival_hour, arrival_minute)
 -- На одной остановке у одной платформы в одно время может стоять одно тс
 );
 
@@ -85,12 +87,14 @@ CREATE TABLE work_order (
     -- 1:M одному наряду соответствует 1 начальная остановка, одной начальной остановке много нарядов
     -- 1:M одному наряду соответствует 1 водитель, одному водителю много нарядов
     id SERIAL PRIMARY KEY,
-    route_id INT REFERENCES route(id) NOT NULL,
+    vehicle_type model_type NOT NULL,
+    route_id INT NOT NULL,
     vehicle_id INT REFERENCES vehicle(id) NOT NULL,
     stop_id INT REFERENCES stop(id) NOT NULL,
     day DATE NOT NULL,
     start_time TIMESTAMP NOT NULL,
     driver_id INT REFERENCES driver(id) NOT NULL,
+    FOREIGN KEY (route_id, vehicle_id) REFERENCES route (id, type),
     UNIQUE (day, vehicle_id)
 );
 
