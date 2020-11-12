@@ -14,7 +14,7 @@ CREATE TABLE Band(
 CREATE TABLE Musician(
 	id SERIAL,
 	name TEXT NOT NULL CHECK(char_length(name) > 0),
-	birth_date TIME NOT NULL, 
+	birth_date Date NOT NULL, 
     PRIMARY KEY(id)
 );
 -- других ключей нет
@@ -25,7 +25,7 @@ CREATE TABLE ContractStart(
     Id SERIAL,
     band_id INT,
     musician_id INT,  
-    year_of_start INT CHECK(year_of_start > 0),
+    year_of_start INT,
     PRIMARY KEY(id),
     FOREIGN KEY(band_id) REFERENCES Band(id),
     FOREIGN KEY(musician_id) REFERENCES Musician(id)
@@ -76,7 +76,7 @@ CREATE TABLE Album(
 -- На одном альбоме не может быть несколько треков с одинаковым названием
 CREATE TABLE Track(
     id SERIAL, name TEXT NOT NULL CHECK (char_length(name) > 0), 
-    length INT NOT NULL CHECK(length > 0), 
+    length INT NOT NULL, 
     album_id INT,
     PRIMARY KEY(id),
     UNIQUE(name, album_id),
@@ -86,11 +86,11 @@ CREATE TABLE Track(
 
 -- Связь M:N между треками и музыкантами
 -- Id трека, id музыканта, роль музыканта на треке
-CREATE TABLE Record(id SERIAL, 
+CREATE TABLE Record(
     track_id INT, 
     musician_id INT, 
     role TEXT CHECK(char_length(role) > 0),
-    PRIMARY KEY(id),
+    PRIMARY KEY (track_id, musician_id),
     FOREIGN KEY(track_id) REFERENCES Track(id),
     FOREIGN KEY(musician_id) REFERENCES Musician(id)
 );
@@ -136,7 +136,7 @@ CREATE TABLE Distributions(
     album_id INT,
     region_id INT, 
     carrier_type Carrier NOT NULL, 
-    local_name TEXT NOT NULL CHECK(char_length(local_name) >= 0), 
+    local_name TEXT NOT NULL CHECK(char_length(local_name) > 0), 
     PRIMARY KEY(id),
     -- В каждый регион один альбом может быть поставлен только один раз на конкретном носителе
     UNIQUE(album_id, region_id, carrier_type),
