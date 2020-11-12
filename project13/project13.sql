@@ -40,7 +40,7 @@ CREATE TABLE HousingTable(
 -- Список возможных удобств
 CREATE TABLE UtilityTable(
   id SERIAL PRIMARY KEY,
-  name TEXT UNIQUE -- удобство задаётся своим описанием
+  name TEXT NOT NULL UNIQUE -- удобство задаётся своим описанием
 );
 -- других ключей нет
  
