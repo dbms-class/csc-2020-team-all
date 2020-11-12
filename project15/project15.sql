@@ -94,7 +94,7 @@ CREATE TABLE work_order (
     day DATE NOT NULL,
     start_time TIMESTAMP NOT NULL,
     driver_id INT REFERENCES driver(id) NOT NULL,
-    FOREIGN KEY (route_id, vehicle_id) REFERENCES route (id, type),
+    FOREIGN KEY (route_id, vehicle_type) REFERENCES route (id, type),
     UNIQUE (day, vehicle_id)
 );
 
