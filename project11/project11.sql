@@ -56,12 +56,12 @@ CREATE TABLE delegation(
 -- Волонтер определяется своей id картой и при этом волонтеры должны иметь уникальные телефоны.
 -- Может быть неконсистентность, что id волонтера совпадает с id спортсмена.
 CREATE TABLE volunteer(
-    card_id VARCHAR(5) NOT NULL,
+    id SERIAL PRIMARY KEY,
+    -- card_id может принадлежать только одному волонтеру
+    card_id VARCHAR(5) NOT NULL UNIQUE,
     name TEXT NOT NULL,
     -- Один телефон принадлежит только одному волонтеру
-	telephone TEXT NOT NULL UNIQUE,
-    -- card_id может принадлежать только одному волонтеру
-	PRIMARY KEY(card_id)
+	telephone TEXT NOT NULL UNIQUE
     -- Других ключей нет
 );
 
@@ -73,7 +73,9 @@ CREATE TYPE sex AS ENUM('Мужской', 'Женский', 'Custom');
 -- Внешние ссылки на id делегации и id помещения (inf <-> 1 в обоих случаях)
 -- Сейчас может возникнуть неконсисентность, что house_id оказался не id жилого дома.
 CREATE TABLE sportsman(
-    card_id VARCHAR(5) NOT NULL,
+    id SERIAL PRIMARY KEY,
+    --card_id может принадлежать только одному спортсмену
+    card_id VARCHAR(5) NOT NULL UNIQUE,
     name TEXT NOT NULL, 
     age SMALLINT NOT NULL,
     weight SMALLINT NOT NULL, 
@@ -81,14 +83,11 @@ CREATE TABLE sportsman(
     sex SEX NOT NULL,
     delegation_id INT NOT NULL, 
     house_id INT NOT NULL,
-    volunteer_id TEXT,
+    volunteer_id INT,
 	
-	-- Ключи
-    --card_id может принадлежать только одному спортсмену
-	PRIMARY KEY(card_id),
-	
+    -- Ключи
     -- Связь 1:N между волонтерами и спортсменами. Один волонтер может обслуживать много спортсменов.
-	FOREIGN KEY(volunteer_id) REFERENCES volunteer(card_id),
+	FOREIGN KEY(volunteer_id) REFERENCES volunteer,
     -- Других ключей нет
 	
 	-- Связь N:1 между спортсмена и делегациями. Каждый спортсмен может быть только в одной делегации. В каждой делегации может быть много спортсменов.
@@ -113,7 +112,7 @@ CREATE TABLE sport (
 -- видами спорта в которых они участвуют
 -- отношение inf <-> inf
 CREATE TABLE sportsman_to_sport(
-    sportsman_id TEXT NOT NULL, 
+    sportsman_id INT NOT NULL, 
     sport INT NOT NULL REFERENCES sport,
 
     -- Спортсмен не может дважды участвовать в одном виде спорта.
@@ -121,7 +120,7 @@ CREATE TABLE sportsman_to_sport(
 	-- Других ключей нет
 
     -- Связь N:M между спортсменами и видами спорта. Один спортсмен может участвовать в многих видах спорта. Одним видом спорта могут заниматься много спортсменов.
-	FOREIGN KEY(sportsman_id) REFERENCES sportsman(card_id)
+	FOREIGN KEY(sportsman_id) REFERENCES sportsman
 );
 
 -- Отношение между объектами и
@@ -166,7 +165,7 @@ CREATE TYPE medal AS ENUM('Золото', 'Серебро', 'Бронза');
 -- Связь inf <-> inf между соревнованиями и спортсменами
 CREATE TABLE sportsman_to_competition(
     competition_id INT, 
-    sportsman_id TEXT,
+    sportsman_id INT,
     medal MEDAL NOT NULL,
     -- В одном соревновании не может быть выдано две одинаковые медали
     UNIQUE(competition_id, medal),
@@ -177,14 +176,14 @@ CREATE TABLE sportsman_to_competition(
     -- Каждый спортсмен может участвовать более чем в одном соревновании (но не в одном и том же несколько раз)
     -- Каждое соревнование может содержать более чем одного спортсмена
 	FOREIGN KEY(competition_id) REFERENCES competition(id),
-	FOREIGN KEY(sportsman_id) REFERENCES sportsman(card_id)
+	FOREIGN KEY(sportsman_id) REFERENCES sportsman
 );
 
 -- Отношение inf <-> 1 между заданиями и волонтерами
 -- Задание содержит id волонтера, дату выполнения и текстовое описание.
 CREATE TABLE volunteer_task(
     id SERIAL,
-	volunteer_id TEXT NOT NULL,
+	volunteer_id INT NOT NULL,
 	task_description TEXT NOT NULL,
     date DATE NOT NULL, 
     time TIME(0) NOT NULL,
@@ -195,7 +194,7 @@ CREATE TABLE volunteer_task(
     -- Других ключей нет
     
     -- Связь 1:N между волонтерами и заданиями. Одно задание может быть назначено только одному волонтеру. Один волонтер может выполнять разные задания.
-	FOREIGN KEY(volunteer_id) REFERENCES volunteer(card_id)
+	FOREIGN KEY(volunteer_id) REFERENCES volunteer
 );
 
 -- Информация о транспортном средстве:
