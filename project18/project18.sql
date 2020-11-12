@@ -39,6 +39,9 @@ CREATE TABLE Users (
     CHECK(email LIKE '%_@__%.__%')
 );
 
+INSERT INTO Users VALUES
+(1, 'name', 'surname', 'a@bb.cc', 'phone', 'M', '2001-10-01', 'photo');
+
 -- Страна с этим id имеет: уникальное название (name), стоимость сервисного сбора tax
 CREATE TABLE Country (
     id SERIAL PRIMARY KEY,
@@ -46,6 +49,9 @@ CREATE TABLE Country (
     tax INT NOT NULL,
     CHECK(tax >= 0)
 );
+
+INSERT INTO Country VALUES
+(1, 'country', 1000);
 
 -- Жильё с данным id имеет: id страны (country_id), адрес(address), gps координаты (location), описание (description), количество комнат (room_count), количество кроватей (bed_count), допустимое количество жильцов (max_roomates), арендодателя (rentor_id), стоимость уборки (cleaning_price)
 CREATE TABLE Apartment(
@@ -69,11 +75,17 @@ CREATE TABLE Apartment(
     CHECK(cleaning_price >= 0)
 );
 
+INSERT INTO Apartment VALUES 
+(1, 1, 1, 'address', POINT(1, 1), 'description', 1, 1, 1, 1000);
+
 -- Удобство с этим id имеет название (name)
 CREATE TABLE Comfort(
     id SERIAL PRIMARY KEY,
     name TEXT UNIQUE NOT NULL
 );
+
+INSERT INTO Comfort VALUES
+(1, 'name');
 
 -- Таблица связывает апартаменты с удобствами, которые в них есть
 CREATE TABLE ApartmentComfort(
@@ -83,6 +95,9 @@ CREATE TABLE ApartmentComfort(
     FOREIGN KEY(apartment_id) REFERENCES Apartment(id),
     FOREIGN KEY(comfort_id) REFERENCES Comfort(id)
 );
+
+INSERT INTO ApartmentComfort VALUES
+(1, 1);
 
 -- Апартаменты appartment_id в неделю week стоят price денег; другие ключи не нужны
 CREATE TABLE Price (
@@ -96,6 +111,9 @@ CREATE TABLE Price (
     -- чтобы не было неоднозначного задания цены одних апартаментов в одну неделю
     CONSTRAINT c_apartament_week UNIQUE (apartment_id, week)
 );
+
+INSERT INTO Price VALUES
+(1, 1, 1000);
 
 -- Заявка с этим id подана на апартаменты appartment_id, арендодателем user_id и имеет свойства: время начала бронирования (start_date), время конца бронирования (end_date), количество проживающих (roommates_count), комментарий (comment), статус подтверждения (confirmed), полную цену (full_price)
 CREATE TABLE Application (
@@ -117,6 +135,9 @@ CREATE TABLE Application (
     CHECK(date_start < date_end)
 );
 
+INSERT INTO Application VALUES
+(1, 1, 1, '2001-10-01', '2010-10-01', 1, 'comment', True, 1000);
+
 -- Оценки пользователей о жилье: оценка id дана на апартаменты appartment_id и содержит текст review
 CREATE TABLE BookingReview (
     id SERIAL PRIMARY KEY,
@@ -128,7 +149,6 @@ CREATE TABLE BookingReview (
     FOREIGN KEY(application_id) REFERENCES Application(id),
     -- связь 1:M арендаторов и отзывов. Арендатор оставляет много отзывов, каждый из которых имеет лишь одного автора
     FOREIGN KEY(user_id) REFERENCES Users(id)
-
 );
 
 -- Таблица с результатами оценки жилья арендатором: ревью с BookingReview_id имеет оценку score по параметру param; других ключей быть не должно
