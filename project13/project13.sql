@@ -86,9 +86,9 @@ CREATE TYPE RATING AS ENUM('1', '2', '3', '4', '5');
 CREATE TABLE RenterReviewTable(
   application_id INT REFERENCES ApplicationTable(id),
   review_text TEXT,
-  location_rating RATING,
-  cleanness_rating RATING,
-  hospitality_rating RATING
+  location_rating RATING NOT NULL,
+  cleanness_rating RATING NOT NULL,
+  hospitality_rating RATING NOT NULL
 );
 -- других ключей нет
  
@@ -96,7 +96,7 @@ CREATE TABLE RenterReviewTable(
 CREATE TABLE HostReviewTable(
   application_id INT REFERENCES ApplicationTable(id),
   review_text TEXT,
-  living_rating RATING
+  living_rating RATING NOT NULL
 );
 -- других ключей нет
  
