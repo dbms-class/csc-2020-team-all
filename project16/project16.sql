@@ -50,12 +50,12 @@ CREATE TABLE Task(ID SERIAL PRIMARY KEY,
 -- страну country, откуда он приехал (отсюда и делегация), номер объекта object_id, где он живёт, идентификатор волонтёра volunteer_id, к которому он прикреплён.
 CREATE TABLE Sportsmens(id SERIAL PRIMARY KEY,
                         name TEXT NOT NULL,
-                       	gender TEXT CHECK(gender='m' or gender='f') NOT NULL,
+                       	gender TEXT CHECK(gender='m' or gender='f') DEFAULT NULL,
                         height INT CHECK(height > 0),
                         weight INT CHECK(weight > 0),
                         age INT CHECK(age > 0),
                         country_id INT NOT NULL,
-                        object_id INT NOT NULL,
+                        object_id INT DEFAULT NULL,
                         volunteer_id INT NOT NULL, 
                         FOREIGN key(country_id) REFERENCES Countries(id),  -- (N: 1) с таблицей Delegations
                        FOREIGN KEY(object_id) REFERENCES  Objects(ID), -- (N: 1) с таблицей Objects
