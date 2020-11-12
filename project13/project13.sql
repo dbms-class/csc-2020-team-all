@@ -19,7 +19,7 @@ CREATE TABLE UserTable(
 CREATE TABLE CountryTable(
   id SERIAL PRIMARY KEY,
   name TEXT NOT NULL UNIQUE, -- чтобы не было двух одинаково названных стран
-  tax INT NOT NULL CHECK(tax >= 0)
+  tax NUMERIC NOT NULL CHECK(tax >= 0)
 );
  
 -- Жильё в аренду номер id с данными параметрами
