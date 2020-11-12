@@ -116,12 +116,12 @@ CREATE TABLE EntertainmentGenreTable(
 -- список развлечений
 CREATE TABLE EntertainmentTable(
   id SERIAL PRIMARY KEY,
-  latitude NUMERIC CHECK(latitude BETWEEN -90 AND 90),
-  longitude NUMERIC CHECK(longitude BETWEEN -180 AND 180),
+  latitude NUMERIC NOT NULL CHECK(latitude BETWEEN -90 AND 90),
+  longitude NUMERIC NOT NULL CHECK(longitude BETWEEN -180 AND 180),
   name TEXT NOT NULL,
   date_range_start DATE NOT NULL,
   date_range_end DATE NOT NULL,
-  genre_id INT REFERENCES EntertainmentGenreTable(id),
+  genre_id INT NOT NULL REFERENCES EntertainmentGenreTable(id),
   CHECK(date_range_start <= date_range_end)
 );
 -- ключей больше нет
