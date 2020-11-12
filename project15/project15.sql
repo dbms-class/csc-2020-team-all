@@ -58,7 +58,8 @@ CREATE TABLE time_table (
     is_weekend BOOL NOT NULL,
     stop_id INT REFERENCES stop(id) NOT NULL,
     platform_number INT CHECK(platform_number > 0) NOT NULL,
-    arrival_time TIMESTAMP NOT NULL,
+    arrival_hour SMALLINT NOT NULL CHECK(arrival_hour BETWEEN 0 AND 23),
+    arrival_minute SMALLINT NOT NULL CHECK(arrival_minute BETWEEN 0 AND 59),
     UNIQUE(stop_id, platform_number, arrival_time)
 -- На одной остановке у одной платформы в одно время может стоять одно тс
 );
@@ -101,7 +102,8 @@ CREATE TABLE control (
 -- N:M одному наряду соответствует много остановок, одной остановке - много нарядов
     work_order_id INT REFERENCES work_order(id) NOT NULL,
     stop_id INT REFERENCES stop(id),
-    real_time TIMESTAMP NOT NULL
+    real_hour SMALLINT NOT NULL CHECK(real_hour BETWEEN 0 AND 23),
+    real_minute SMALLINT NOT NULL CHECK(real_minute BETWEEN 0 AND 59)
 );
 
 
