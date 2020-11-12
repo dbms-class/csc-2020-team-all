@@ -9,13 +9,18 @@ CREATE TABLE Objects(id SERIAL PRIMARY KEY,
                      name TEXT UNIQUE, -- клички не всегда есть и не могут пересекаться
                     FOREIGN KEY(purpose) REFERENCES FunctionPurposes(purpose)); -- (N: 1) с таблицей FunctionPurposes
 
+-- таблица справочник стран 
+CREATE TABLE Countries(id SERIAL PRIMARY KEY,
+                      name TEXT UNIQUE NOT NULL);
+
 
 -- Делегация представляет страну country,
 -- телефон главы в поле phone является уникальным идентификатором, делегация располагается в здании под номером object_id
-CREATE TABLE Delegations(country TEXT UNIQUE,
+CREATE TABLE Delegations(country_id INT UNIQUE NOT NULL,
                          head TEXT NOT NULL, 
                          phone TEXT PRIMARY KEY, 
                          object_id INT NOT NULL,
+                         FOREIGN KEY(country_id) REFERENCES Countries(id),
                          FOREIGN KEY(object_id) REFERENCES objects(id)); -- (N: 1) с таблицей Objects
 
 
@@ -49,10 +54,10 @@ CREATE TABLE Sportsmens(id SERIAL PRIMARY KEY,
                         height INT CHECK(height > 0),
                         weight INT CHECK(weight > 0),
                         age INT CHECK(age > 0),
-                        country TEXT NOT NULL,
+                        country_id INT NOT NULL,
                         object_id INT NOT NULL,
                         volunteer_id INT NOT NULL, 
-                        FOREIGN key(country) REFERENCES Delegations(country),  -- (N: 1) с таблицей Delegations
+                        FOREIGN key(country_id) REFERENCES Countries(id),  -- (N: 1) с таблицей Delegations
                        FOREIGN KEY(object_id) REFERENCES  Objects(ID), -- (N: 1) с таблицей Objects
                        FOREIGN KEY(volunteer_id) REFERENCES Volunteers(ID));  -- (N: 1) с таблицей Volunteers
 
