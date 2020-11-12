@@ -82,9 +82,8 @@ class App(object):
               sportsman_id = int(sportsman)
               cur.execute("UPDATE Sportsmens SET country_id=%s, volunteer_id=%s WHERE id=%s;", (country_id, volunteer_id, sportsman_id))
             else:
-              print('a')
-              cur.execute("INSERT INTO Sportsmens(name, gender, country_id, object_id, volunteer_id) VALUES(%s, %s, %s, 1, %s);", (sportsman, 'm', country_id, volunteer_id))
-              print('b')
+              cur.execute("INSERT INTO Sportsmens(name, gender, country_id, object_id, volunteer_id) VALUES(%s, %s, %s, 1, %s);",
+              			 (sportsman, 'm', country_id, volunteer_id))
         except Exception as e:
           status_message = f"Error: {e}"
         return status_message
