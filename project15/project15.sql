@@ -22,7 +22,7 @@ CREATE TABLE vehicle (
     id SERIAL PRIMARY KEY,
     year_release INT NOT NULL CHECK(year_release BETWEEN 1800 AND 2200),
     state vehicle_state NOT NULL,
-    model_id INT REFERENCES model(id)
+    model_id INT REFERENCES model(id) NOT NULL
 );
 
 
@@ -44,8 +44,8 @@ CREATE TABLE route (
 -- Связь 1:M у одного маршрута одна конечная остановка, у одной конечной остановки много маршрутов
     id INT PRIMARY KEY,
     type model_type NOT NULL,
-    start_id INT REFERENCES stop(id),
-    end_id INT REFERENCES stop(id),
+    start_id INT REFERENCES stop(id) NOT NULL,
+    end_id INT REFERENCES stop(id) NOT NULL,
 );
 
 
@@ -53,10 +53,10 @@ CREATE TABLE route (
 --Расписание(тс, номер маршрута, день недели, время прибытия, номер остановки, платформа, выходной или рабочий день) (то есть время до минуты уникальное)
 
 CREATE TABLE time_table (
-    vehicle_id INT REFERENCES vehicle(id),
-    route_id INT REFERENCES route(id),
+    vehicle_id INT REFERENCES vehicle(id) NOT NULL,
+    route_id INT REFERENCES route(id) NOT NULL,
     is_weekend BOOL NOT NULL,
-    stop_id INT REFERENCES stop(id),
+    stop_id INT REFERENCES stop(id) NOT NULL,
     platform_number INT CHECK(platform_number > 0) NOT NULL,
     arrival_time TIMESTAMP NOT NULL,
     UNIQUE(stop_id, platform_number, arrival_time)
@@ -84,12 +84,12 @@ CREATE TABLE work_order (
     -- 1:M одному наряду соответствует 1 начальная остановка, одной начальной остановке много нарядов
     -- 1:M одному наряду соответствует 1 водитель, одному водителю много нарядов
     id SERIAL PRIMARY KEY,
-    route_id INT REFERENCES route(id),
-    vehicle_id INT REFERENCES vehicle(id),
-    stop_id INT REFERENCES stop(id),
+    route_id INT REFERENCES route(id) NOT NULL,
+    vehicle_id INT REFERENCES vehicle(id) NOT NULL,
+    stop_id INT REFERENCES stop(id) NOT NULL,
     day DATE NOT NULL,
     start_time TIMESTAMP NOT NULL,
-    driver_id INT REFERENCES driver(id),
+    driver_id INT REFERENCES driver(id) NOT NULL,
     UNIQUE (day, vehicle_id)
 );
 
@@ -99,9 +99,9 @@ CREATE TABLE work_order (
 
 CREATE TABLE control (
 -- N:M одному наряду соответствует много остановок, одной остановке - много нарядов
-    work_order_id INT REFERENCES work_order(id),
+    work_order_id INT REFERENCES work_order(id) NOT NULL,
     stop_id INT REFERENCES stop(id),
-    real_time TIMESTAMP NOT NULL,
+    real_time TIMESTAMP NOT NULL
 );
 
 
@@ -118,8 +118,8 @@ CREATE TABLE ticket_menu (
 --СтатистикаОплаты(ид пункта билетного меню, день, количество валидаций билета)
 
 CREATE TABLE statistic (
-    ticket_menu_id INT REFERENCES ticket_menu(id),
+    ticket_menu_id INT REFERENCES ticket_menu(id) NOT NULL,
     day DATE NOT NULL,
-    validations_count INT CHECK (validations_count >= 0),
+    validations_count INT NOT NULL CHECK (validations_count >= 0),
     UNIQUE (ticket_menu_id, day)
 );
