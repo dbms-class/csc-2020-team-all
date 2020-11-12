@@ -107,7 +107,7 @@ CREATE TABLE Applications
 -- PRIMARY KEY отвечает за отсутствие одинаковых записей в таблице
 CREATE TABLE Users_Apartments
 (
-    -- merge-table, реализующая отношение many-to-many между владельцами и сдающимися апартаментами
+    -- merge-table, реализующая отношение one-to-many между владельцами и сдающимися апартаментами
     user_id      INT references Users (id),
     apartment_id INT PRIMARY KEY references Apartments (id)
 );
