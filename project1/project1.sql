@@ -20,7 +20,8 @@ CREATE TABLE Buildings
 
 CREATE TABLE Countries
 (
-    name TEXT NOT NULL PRIMARY KEY
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE
 );
 
 --Национальная делегации: {id, имя_страны, id_руководитель, id_здание}
@@ -28,7 +29,7 @@ CREATE TABLE Countries
 CREATE TABLE National_delegations (
     id                       SERIAL PRIMARY KEY,
     -- нет двух делегаций из одной страны
-    country_name             TEXT REFERENCES Countries(name) NOT NULL UNIQUE,
+    country_id               INT REFERENCES Countries(id)    NOT NULL UNIQUE,
     -- у каждой делегации есть руководитель, 1:1
     head_id                  INT REFERENCES Heads(id)        NOT NULL,
     -- у каждой делегации есть штаб, 1:1
