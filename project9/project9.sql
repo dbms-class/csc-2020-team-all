@@ -84,9 +84,7 @@ CREATE TABLE Album
     type     AlbumType default NULL,
     genre_id INT NOT NULL,
     group_id INT NOT NULL,
-    size     INT,
     PRIMARY KEY (id),
-    CHECK ( size > 0 ),
     FOREIGN KEY (genre_id) REFERENCES Genre (id),
     FOREIGN KEY (group_id) REFERENCES Groups (id)
 );
@@ -134,7 +132,7 @@ CREATE TABLE MusicianToTrack
 -- справочник с ролями сотрудников лейбла при записи
 CREATE TABLE StaffRole
 (
-    Id   SERIAL,
+    id   SERIAL,
     name TEXT NOT NULL UNIQUE,
     PRIMARY KEY (id)
 );
