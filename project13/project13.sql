@@ -47,7 +47,8 @@ CREATE TABLE UtilityTable(
 -- В аренде housing_id есть удобство utility_id
 CREATE TABLE HousingUtilityTable(
   housing_id INT NOT NULL REFERENCES HousingTable,
-  utility_id INT NOT NULL REFERENCES UtilityTable
+  utility_id INT NOT NULL REFERENCES UtilityTable,
+  UNIQUE(housing_id, utility_id)
 -- аренда:удобство N:M
 );
 -- других ключей нет
