@@ -43,10 +43,10 @@ CREATE TABLE vehicle (
 CREATE TABLE route (
 -- Связь 1:M у одного маршрута одна конечная остановка, у одной конечной остановки много маршрутов
     id INT NOT NULL,
-    type model_type NOT NULL,
+    vehicle_type model_type NOT NULL,
     start_id INT REFERENCES stop(id) NOT NULL,
     end_id INT REFERENCES stop(id) NOT NULL,
-    UNIQUE(id, type)
+    UNIQUE(id, vehicle_type)
 );
 
 
@@ -61,7 +61,7 @@ CREATE TABLE time_table (
     platform_number INT CHECK(platform_number > 0) NOT NULL,
     arrival_hour SMALLINT NOT NULL CHECK(arrival_hour BETWEEN 0 AND 23),
     arrival_minute SMALLINT NOT NULL CHECK(arrival_minute BETWEEN 0 AND 59),
-    FOREIGN KEY (route_id, vehicle_type) REFERENCES route (id, type),
+    FOREIGN KEY (route_id, vehicle_type) REFERENCES route (id, vehicle_type),
     UNIQUE(stop_id, platform_number, arrival_hour, arrival_minute)
 -- На одной остановке у одной платформы в одно время может стоять одно тс
 );
@@ -94,7 +94,7 @@ CREATE TABLE work_order (
     day DATE NOT NULL,
     start_time TIMESTAMP NOT NULL,
     driver_id INT REFERENCES driver(id) NOT NULL,
-    FOREIGN KEY (route_id, vehicle_type) REFERENCES route (id, type),
+    FOREIGN KEY (route_id, vehicle_type) REFERENCES route (id, vehicle_type),
     UNIQUE (day, vehicle_id)
 );
 
