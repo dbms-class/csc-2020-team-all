@@ -8,6 +8,7 @@ from connect import parse_cmd_line
 from connect import create_connection
 from static import index
 
+
 @cherrypy.expose
 class App(object):
     def __init__(self, args):
@@ -19,7 +20,7 @@ class App(object):
 
     @cherrypy.expose
     def index(self):
-      return index()
+        return index()
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
@@ -47,10 +48,10 @@ class App(object):
 
 
 def run():
-    cherrypy_cors.install()    
+    cherrypy_cors.install()
     cherrypy.config.update({
-      'server.socket_host': '0.0.0.0',
-      'server.socket_port': 8080,
+        'server.socket_host': '0.0.0.0',
+        'server.socket_port': 8080,
     })
     config = {
         '/': {
@@ -59,3 +60,6 @@ def run():
     }
     cherrypy.quickstart(App(parse_cmd_line()), config=config)
 
+
+if __name__ == '__main__':
+    run()

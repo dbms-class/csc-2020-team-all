@@ -4,7 +4,8 @@ CREATE TYPE Sex as ENUM (
     'Other'
     );
 
--- User с данным id имеет: имя (first_name), фамилию (second_name), email, телефон (phone), пол (sex), день рождения (birthday), url на фото (photo_url)
+-- User с данным id имеет: имя (first_name), фамилию (second_name), email, телефон (phone),
+--                         пол (sex), день рождения (birthday), url на фото (photo_url)
 -- Имя, фамилия, email и номер телефона являются обязательными полями
 -- Email и телефон уникальные, чтобы не разрешать мультиаккаунт для одного и того же человека
 CREATE TABLE Users
@@ -12,7 +13,7 @@ CREATE TABLE Users
     id          SERIAL PRIMARY KEY,
     first_name  TEXT NOT NULL,
     second_name TEXT NOT NULL,
-    email       TEXT NOT NULL UNIQUE CHECK (email ~ '^[\w+\.]+@[\w\.]+$'),
+    email       TEXT NOT NULL UNIQUE CHECK (email ~ '^[\w+.]+@[\w.]+$'),
     phone       TEXT NOT NULL UNIQUE CHECK (phone ~ '^\+?\d+(-\d+)*$'),
     sex         Sex,
     birthday    DATE CHECK (birthday < now() - INTERVAL '16 years'),
@@ -23,7 +24,7 @@ CREATE TABLE Users
 -- Не существует стран с одинаковым названием
 CREATE TABLE Countries
 (
-    id   SERIAL        PRIMARY KEY,
+    id   SERIAL PRIMARY KEY,
     name TEXT          NOT NULL UNIQUE,
     -- ограничение на неотрицательный сервисный сбор
     tax  DECIMAL(3, 2) NOT NULL CHECK (tax >= 0)
@@ -37,13 +38,15 @@ CREATE TABLE Apartments
     id             SERIAL PRIMARY KEY,
     -- внешний ключ на таблицу Countries, связь many-to-one (N:1)
     country_id     INT  NOT NULL references Countries (id),
+    -- внешний ключ на таблицу Users, связь many-to-one (N:1)
+    owner_id       INT  NOT NULL references Users (id),
     address        TEXT NOT NULL,
     gps            POINT,
     description    TEXT,
     -- параметры количества комнат\кроватей\соседей должны быть положительными
-    room_count     INT NOT NULL CHECK (room_count > 0),
-    bed_count      INT NOT NULL CHECK (bed_count > 0),
-    max_roommates  INT NOT NULL CHECK (max_roommates > 0),
+    room_count     INT  NOT NULL CHECK (room_count > 0),
+    bed_count      INT  NOT NULL CHECK (bed_count > 0),
+    max_roommates  INT  NOT NULL CHECK (max_roommates > 0),
     -- уборки может не быть, либо может быть уборка (бесплатная или с положительной ценой)
     cleaning_price INT CHECK (cleaning_price >= 0)
 );
@@ -89,27 +92,18 @@ CREATE TABLE Applications
 (
     id              SERIAL PRIMARY KEY,
     -- внешний ключ на апартаменты, отношение many-to-one (N:1) (бывает много заявок на одни апартаменты)
-    apartment_id    INT NOT NULL references Apartments (id),
+    apartment_id    INT       NOT NULL references Apartments (id),
     -- внешний ключ на Users, отношение many-to-one (N:1) (аналогично)
-    user_id         INT NOT NULL references Users (id),
+    user_id         INT       NOT NULL references Users (id),
     start_date      TIMESTAMP NOT NULL,
     -- даты должны быть корректно упорядочены
     end_date        TIMESTAMP NOT NULL CHECK (end_date > start_date),
     -- соседей неотрицательное число
-    roommates_count INT NOT NULL CHECK (roommates_count > 0),
+    roommates_count INT       NOT NULL CHECK (roommates_count > 0),
     comment         TEXT,
-    confirmed       BOOLEAN NOT NULL,
+    confirmed       BOOLEAN   NOT NULL,
     -- стоимость может быть NULL, пока подтверждение не выставлено
     full_price      INT CHECK (full_price >= 0)
-);
-
--- Таблица (merge-table) владельцев жилья - пользователь с этим id (user_id) владеет жильём с id (appartment_id)
--- PRIMARY KEY отвечает за отсутствие одинаковых записей в таблице
-CREATE TABLE Users_Apartments
-(
-    -- merge-table, реализующая отношение one-to-many между владельцами и сдающимися апартаментами
-    user_id      INT references Users (id),
-    apartment_id INT PRIMARY KEY references Apartments (id)
 );
 
 -- Оценки арендаторов о жилье
@@ -123,7 +117,8 @@ CREATE TABLE BookingReviews
 
 -- Список параметров оценки жилья
 -- ENUM со списком всех параметров для оценки
-CREATE TABLE BookingReviewParams (
+CREATE TABLE BookingReviewParams
+(
 --    'Удобство расположения',
 --    'Чистота',
 --    'Дружественность хозяина'
@@ -156,7 +151,8 @@ CREATE TABLE CustomerReviews
 );
 
 -- Список типов событий
-CREATE TABLE Genres (
+CREATE TABLE Genres
+(
 --    'Фестиваль',
 --    'Ярмарка'
     id   SERIAL PRIMARY KEY,
@@ -168,9 +164,9 @@ CREATE TABLE Genres (
 CREATE TABLE Event
 (
     id         SERIAL PRIMARY KEY,
-    name       TEXT NOT NULL,
-    address    TEXT NOT NULL,
-    gps        POINT NOT NULL,
+    name       TEXT      NOT NULL,
+    address    TEXT      NOT NULL,
+    gps        POINT     NOT NULL,
     date_start TIMESTAMP NOT NULL,
     -- событие либо длится неопределенное время, либо неотрицательное
     duration   INTERVAL CHECK (duration > INTERVAL '0'),
