@@ -10,8 +10,7 @@ CREATE TABLE UserTable(
   tel_number TEXT NOT NULL UNIQUE, -- чтобы можно было авторизовываться по номеру телефона, и он был разным у разных пользователей
   sex SEX,
   date_of_birth DATE,
-  photo_file_path TEXT,
-  is_registered BOOLEAN NOT NULL
+  photo_file_path TEXT
 );
 -- других ключей нет
  
