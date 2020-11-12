@@ -56,14 +56,14 @@ CREATE TABLE HousingUtilityTable(
 -- Детали заявки id о проживании пользователя user_id
 CREATE TABLE ApplicationTable(
   id SERIAL PRIMARY KEY,
-  renter_id INT REFERENCES UserTable(id),
-  housing_id INT REFERENCES HousingTable(id),
-  arrival_date DATE,
-  departure_date DATE,
-  guest_count INT CHECK(guest_count >= 0),
+  renter_id INT NOT NULL REFERENCES UserTable(id),
+  housing_id INT NOT NULL REFERENCES HousingTable(id),
+  arrival_date DATE NOT NULL,
+  departure_date DATE NOT NULL,
+  guest_count INT NOT NULL CHECK(guest_count >= 0),
   comment TEXT,
-  accepted BOOLEAN,
-  final_cost NUMERIC CHECK(final_cost >= 0),
+  accepted BOOLEAN NOT NULL,
+  final_cost NUMERIC NOT NULL CHECK(final_cost >= 0),
   CHECK(arrival_date <= departure_date)
 );
 -- других ключей нет
