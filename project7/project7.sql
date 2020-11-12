@@ -37,7 +37,7 @@ create table shipping_package
     id               serial primary key,
     weight           numeric not null check (weight > 0.0),
     release_packages int     not null check (release_packages >= 0),
-    release_price    numeric check (release_price > 0.0)
+    release_price    numeric not null check (release_price > 0.0)
 );
 
 -- Лекарство с номером "id" имеет торговое название "trademark", международное непатентованное название "international_name", лекарственную форму с номером "drug_form_id", действующее вещество с названием "substance_name", сертификат с номером "certificate_id", тип отпускной упаковки "release_package_type" и перевозится с упаковке с номером "shipping_package_id"
