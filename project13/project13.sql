@@ -62,7 +62,7 @@ CREATE TABLE ApplicationTable(
   departure_date DATE NOT NULL,
   guest_count INT NOT NULL CHECK(guest_count >= 0),
   comment TEXT,
-  accepted BOOLEAN NOT NULL,
+  accepted BOOLEAN,
   final_cost NUMERIC NOT NULL CHECK(final_cost >= 0),
   CHECK(arrival_date <= departure_date)
 );
