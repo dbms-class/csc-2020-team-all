@@ -89,6 +89,8 @@ class App(object):
                 on Apartments.id = Prices.apartment_id 
             WHERE country_id = {0} and week = {1}'''
             query = query_pattern.format(country_id, week)
+
+            
             
             if max_price is not None:
                 query += f' and price <= {max_price}'
@@ -96,15 +98,21 @@ class App(object):
                 query += f' and bed_count >= {bed_count}'
             
             cur.execute(query)
+            apartments = cur.fetchall()
+            
+            prices = list(map(lambda a: a[4], apartments))
+            min_p, max_p = min(prices, default=0), max(prices, default=0)
             return list(map(
                 lambda apartment: {
                     'id': apartment[0], 
                     'name': apartment[1],
                     'bed_count': apartment[2],
                     'week': apartment[3],
-                    'price': apartment[4]
+                    'price': apartment[4],
+                    'min_price': min_p,
+                    'max_price': max_p
                 },
-                cur.fetchall()
+                apartments
             ))
 
 def run():
