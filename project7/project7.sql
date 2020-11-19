@@ -159,3 +159,24 @@ create table warehouse_delivery_drugs
     package_count int not null check (package_count > 0),
     primary key (delivery_id, drug_id)
 );
+
+-- Поставка с номером "id" от дистрибьютора с номером "distributor_id" осуществляется на склад с номером "warehouse_id", имеет время прибытия "arrival_time" и ответственного кладовщика с фамилией "storekeepers_last_name"
+-- Связь между warehouse_delivery и distributor N:1, между warehouse_delivery и warehouse 1:N
+create table warehouse_delivery
+(
+    id                     serial primary key,
+    distributor_id         int  not null references distributor (id),
+    warehouse_id           int  not null references warehouse (id),
+    arrival_time           time not null,
+    storekeepers_last_name text not null
+);
+
+-- В поставке с номером "delivery_id" на склад доставляется "package_count" перевозочных упаковок лекарства с номером "drug_id"
+-- Реализует связь M:N между warehouse_delivery и drug
+create table warehouse_delivery_drugs
+(
+    delivery_id   int not null references warehouse_delivery (id),
+    drug_id       int not null references drug (id),
+    package_count int not null check (package_count > 0),
+    primary key (delivery_id, drug_id)
+);
