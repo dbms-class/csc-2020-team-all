@@ -73,8 +73,7 @@ CREATE TABLE PriceTable(
   housing_id INT NOT NULL REFERENCES HousingTable,
   week_number INT NOT NULL,
   cost NUMERIC CHECK(cost >= 0),
-  PRIMARY KEY(housing_id, week_number), -- стоимость суточного проживания в квартире зависит только от номера недели
-  CHECK(date_range_start <= date_range_end),
+  PRIMARY KEY(housing_id, week_number) -- стоимость суточного проживания в квартире зависит только от номера недели
 );
 -- других ключей нет
  
