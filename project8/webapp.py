@@ -90,8 +90,6 @@ class App(object):
             WHERE country_id = {0} and week = {1}'''
             query = query_pattern.format(country_id, week)
 
-            
-            
             if max_price is not None:
                 query += f' and price <= {max_price}'
             if bed_count is not None:
