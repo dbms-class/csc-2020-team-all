@@ -26,13 +26,13 @@ class App(object):
         with create_connection(self.args) as db:
             cur = db.cursor()
             if planet_id is None:
-              cur.execute("SELECT id, name FROM Planet P")
+              cur.execute("SELECT P.id, name, distance, date FROM Planet P JOIN Flight F ON P.id=F.planet_id")
             else:
-              cur.execute("SELECT id, name FROM Planet WHERE id= %s", planet_id)
+              cur.execute("SELECT P.id, name, distance, date FROM Planet P JOIN Flight F ON P.id=F.planet_id WHERE P.id=?", (int(planet_id),))
             result = []
             planets = cur.fetchall()
             for p in planets:
-                result.append({"id": p[0], "name": p[1]})
+                result.append({"id": p[0], "name": p[1], "distance": p[2], "date": p[3]})
             return result
 
     @cherrypy.expose
