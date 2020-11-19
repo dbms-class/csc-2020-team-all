@@ -6,7 +6,7 @@ import cherrypy
 from connect import connection_factory
 from connect import parse_cmd_line
 import model
-#import model2
+#import model2 as model
 from static import index
 
 
