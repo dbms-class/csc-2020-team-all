@@ -16,19 +16,20 @@ import sqlite3 as sqlite_driver
 # Выплевывает структуру с полями, соответствующими каждому аргументу.
 def parse_cmd_line():
     parser = argparse.ArgumentParser(description='Эта программа вычисляет 2+2 при помощи реляционной СУБД')
-    parser.add_argument('--pg-host', help='PostgreSQL host name', default='postgres://ujrazvgd:3mKL-N...@hattie.db.elephantsql.com:5432/ujrazvgd')
+    parser.add_argument('--pg-host', help='PostgreSQL host name', default='localhost')
     parser.add_argument('--pg-port', help='PostgreSQL port', default=5432)
-    parser.add_argument('--pg-user', help='PostgreSQL user', default='ujrazvgd')
-    parser.add_argument('--pg-password', help='PostgreSQL password', default='3mKL-N3awLyWFQOizkpsRfqV1SLX-JKL')
+    parser.add_argument('--pg-user', help='PostgreSQL user', default='postgres')
+    parser.add_argument('--pg-password', help='PostgreSQL password', default='')
     parser.add_argument('--pg-database', help='PostgreSQL database', default='')
     parser.add_argument('--sqlite-file', help='SQLite3 database file. Type :memory: to use in-memory SQLite3 database',
-                        default='')
+                        default=None)
     return parser.parse_args()
 
 
 # Создаёт подключение к постгресу в соответствии с аргументами командной строки.
 def create_connection_pg(args):
-    return pg_driver.connect(user=args.pg_user, password=args.pg_password, host=args.pg_host, port=args.pg_port)
+    return pg_driver.connect(user=args.pg_user, password=args.pg_password, host=args.pg_host, port=args.pg_port,
+                             dbname=args.pg_database)
 
 
 # Создаёт подключение к SQLite в соответствии с аргументами командной строки.
