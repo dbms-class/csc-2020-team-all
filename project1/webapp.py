@@ -42,13 +42,25 @@ class App(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def register(self, sportsman, country, volunteer_id):
-        pass
-        # with create_connection(self.args) as db:
-        #     cur = db.cursor()
-        #     cur.execute("SELECT id, name FROM volunteers;")
-        #     volunteers = cur.fetchall()
-        #     return [{"id": v[0], "name": v[1]} for v in volunteers]
+    def register(self, sportsman, country, volunteer_id, height, weight, age, gender=None):
+        with create_connection(self.args) as db:
+            cur = db.cursor()
+            cur.execute("SELECT * FROM Countries_delegation WHERE country_name = %s", (str(country),))
+            country_database = cur.fetchone()
+            print(country_database)
+            if country_database is None:
+                raise cherrypy.HTTPError(
+                    400,
+                    f"There is no delegation for country {country}"
+                )
+
+            a = cur.execute(
+                "INSERT INTO Athletes (name, gender, height, weight, age, delegation_id, volunteer_id) values (%s, "
+                "%s, %s, %s, %s, %s, %s)",
+                (sportsman, gender, int(height), int(weight), int(age), country_database[0], int(volunteer_id)))
+            print(a)
+
+            return {"id": country_database[0], "name": country_database[1]}
 
 
 def run():

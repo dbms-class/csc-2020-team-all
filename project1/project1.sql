@@ -37,6 +37,9 @@ CREATE TABLE National_delegations (
     unique (country_id, head_id, headquarters_building_id)
 );
 
+CREATE VIEW Countries_delegation AS
+SELECT N.id, C.name as country_name FROM National_delegations N JOIN Countries C ON country_id = C.id;
+
 -- Волонтер: {id,  имя,  телефон}
 -- Волонтер с данным id имеет следующие имя и телефон
 CREATE TABLE Volunteers
