@@ -29,7 +29,6 @@ class App(object):
             cur.execute(f'DROP TABLE {table}')
         return 'Done'
 
-
     @cherrypy.expose
     def fill(self):
         script = ''
@@ -48,7 +47,7 @@ class App(object):
         with create_connection(self.args) as db:
             cur = db.cursor()
             query = f'SELECT id, name, address, country_id FROM Apartments'
-            if country_id != None:
+            if country_id is not None:
                 query += f' WHERE country_id = {country_id}'
             cur.execute(query)
             return list(map(
@@ -78,6 +77,35 @@ class App(object):
             query = f'UPDATE Prices SET price = {price} WHERE apartment_id = {apartment_id} and week = {week}'
             cur.execute(query)
         return 'Done'
+    
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def get_price(self, country_id, week, max_price=None, bed_count=None):
+        with create_connection(self.args) as db:
+            cur = db.cursor()
+            query_pattern = '''
+            SELECT Apartments.id, name, bed_count, week, price 
+            FROM Apartments join Prices 
+                on Apartments.id = Prices.apartment_id 
+            WHERE country_id = {0} and week = {1}'''
+            query = query_pattern.format(country_id, week)
+            
+            if max_price is not None:
+                query += f' and price <= {max_price}'
+            if bed_count is not None:
+                query += f' and bed_count >= {bed_count}'
+            
+            cur.execute(query)
+            return list(map(
+                lambda apartment: {
+                    'id': apartment[0], 
+                    'name': apartment[1],
+                    'bed_count': apartment[2],
+                    'week': apartment[3],
+                    'price': apartment[4]
+                },
+                cur.fetchall()
+            ))
 
 def run():
     cherrypy_cors.install()
