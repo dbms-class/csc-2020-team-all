@@ -52,3 +52,5 @@ git push origin $PRJ
 
 1. Реализовать метод update_timeline. 
   Если запись в таблице уже имелась с такими route_id, stop_id, platform_number, is_working_day, то делается UPDATE в таблице. Иначе добавляется целиком новая запись.
+
+  Цель выполнена успешно.
