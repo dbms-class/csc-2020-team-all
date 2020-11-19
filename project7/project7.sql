@@ -126,6 +126,7 @@ create table drugstore_delivery
     transport_vehicle_number text not null references transport_vehicle (registration_number),
     delivery_date            date not null,
     warehouse_id             int references warehouse (id)
+<<<<<<< HEAD
 );
 
 -- В поставке с номером "delivery_id" в аптеку с номером "drugstore_id" поставляется "package_count" отпускных упаковок лекарства с номером "drug_id"
@@ -139,6 +140,21 @@ create table drugstore_delivery_drugs
     primary key (delivery_id, drugstore_id, drug_id)
 );
 
+=======
+);
+
+-- В поставке с номером "delivery_id" в аптеку с номером "drugstore_id" поставляется "package_count" отпускных упаковок лекарства с номером "drug_id"
+-- Связь между drugstore_delivery_drugs и drugstore_delivery - N:1, между drugstore_delivery_drugs и drugstore - N:1, между drugstore_delivery_drugs и drug - N:1
+create table drugstore_delivery_drugs
+(
+    delivery_id   int references drugstore_delivery (id),
+    drugstore_id  int references drugstore (id),
+    drug_id       int references drug (id),
+    package_count int not null check (package_count > 0),
+    primary key (delivery_id, drugstore_id, drug_id)
+);
+
+>>>>>>> origin/project7
 -- Поставка с номером "id" от дистрибьютора с номером "distributor_id" осуществляется на склад с номером "warehouse_id", имеет время прибытия "arrival_time" и ответственного кладовщика с фамилией "storekeepers_last_name"
 -- Связь между warehouse_delivery и distributor N:1, между warehouse_delivery и warehouse 1:N
 create table warehouse_delivery
@@ -158,6 +174,7 @@ create table warehouse_delivery_drugs
     drug_id       int not null references drug (id),
     package_count int not null check (package_count > 0),
     primary key (delivery_id, drug_id)
+<<<<<<< HEAD
 );
 
 -- Поставка с номером "id" от дистрибьютора с номером "distributor_id" осуществляется на склад с номером "warehouse_id", имеет время прибытия "arrival_time" и ответственного кладовщика с фамилией "storekeepers_last_name"
@@ -169,6 +186,8 @@ create table warehouse_delivery
     warehouse_id           int  not null references warehouse (id),
     arrival_time           time not null,
     storekeepers_last_name text not null
+=======
+>>>>>>> origin/project7
 );
 
 -- В поставке с номером "delivery_id" на склад доставляется "package_count" перевозочных упаковок лекарства с номером "drug_id"
