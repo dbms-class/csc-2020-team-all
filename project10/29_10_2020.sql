@@ -36,7 +36,7 @@ CREATE TABLE route (
 -- Запись с номером ID о времени прибытия TIME номера маршрута route_id на остановку stop_id 
 -- платформу platform_number в is_weekend день недели
 CREATE TABLE timetable (
-  ID INT NOT NULL UNIQUE, -- номер записи не повторяется
+  ID SERIAL PRIMARY KEY, -- номер записи не повторяется
 	time time NOT NULL,
 	route_id INT NOT NULL REFERENCES route(id),
 	stop_id INT NOT NULL REFERENCES stop(id),
