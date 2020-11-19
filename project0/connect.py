@@ -13,6 +13,7 @@ from psycopg2 import pool
 # pip install sqlite3 или её аналогом.
 import sqlite3 as sqlite_driver
 
+from contextlib import contextmanager
 
 # Разбирает аргументы командной строки.
 # Выплевывает структуру с полями, соответствующими каждому аргументу.
@@ -39,6 +40,15 @@ class ConnectionFactory:
     def putconn(self, conn):
         return self.close_fxn(conn)
 
+    # @contextmanager
+    # def conn(self):
+    #     try:
+    #         result = self.open_fxn()
+    #         yield result
+    #     finally:
+    #         print("finally in context")
+    #         self.close_fxn(result)
+
 
 def create_connection_factory(args):
     # Создаёт подключение к SQLite в соответствии с аргументами командной строки.
@@ -57,15 +67,22 @@ def create_connection_factory(args):
         # Создаёт подключение к постгресу в соответствии с аргументами командной строки.
         pg_pool = pool.SimpleConnectionPool(1, 5,
                                   user=args.pg_user, password=args.pg_password, host=args.pg_host, port=args.pg_port)
-        count = 0
+        # conns = []
         def open_pg():
-            nonlocal count
-            count += 1
-            print(f"We issued {count} queries")
-            return pg_pool.getconn()
+            # nonlocal conns
+            # conn = pg_driver.connect(user=args.pg_user, password=args.pg_password, host=args.pg_host, port=args.pg_port)
+            # conns.append(conn)
+            # return conn
+            # -----------------------
+            # return pg_pool.getconn()
+            # -----------------------
+            return pg_driver.connect(user=args.pg_user, password=args.pg_password, host=args.pg_host, port=args.pg_port)
 
         def close_pg(conn):
-            pg_pool.putconn(conn)
+            # -----------------------
+            # pg_pool.putconn(conn)
+            # -----------------------
+            conn.close()
 
         return ConnectionFactory(open_fxn=open_pg, close_fxn=close_pg)
 

@@ -1,41 +1,33 @@
 from connect import connection_factory
 
-def all_planets():
+def all_planets(planet_id = None):
     db = connection_factory.getconn()
     try:
         cur = db.cursor()
-        cur.execute("SELECT id FROM Planet")
+        if planet_id is None:
+            cur.execute("SELECT id, name, distance, flight_count FROM PlanetView")
+        else:
+            cur.execute("SELECT id, name, distance, flight_count FROM PlanetView WHERE id=%s", (planet_id,))
         result = []
         for p in cur.fetchall():
-            result.append(Planet(p[0]))
+            result.append(Planet(p[0], p[1], p[2], p[3]))
         return result
     finally:
         connection_factory.putconn(db)
 
 
 class Planet:
-    def __init__(self, id):
+    def __init__(self, id, name, distance, flight_count):
         self.id = id
+        self.name = name
+        self.distance = distance
+        self.flight_count = flight_count
 
     def get_name(self):
-        # Попробуем использовать менеджер контекста, это же так удобно
-        with connection_factory.getconn() as db:
-            cur = db.cursor()
-            cur.execute(
-                "SELECT name FROM Planet WHERE id=%s", (self.id,)
-            )
-            return cur.fetchone()[0]
+        return self.name
 
     def get_distance(self):
-        db = connection_factory.getconn()
-        try:
-            cur = db.cursor()
-            cur.execute(
-                "SELECT distance FROM Planet WHERE id=%s", (self.id,)
-            )
-            return cur.fetchone()[0]
-        finally:
-            connection_factory.putconn(db)
+        return self.distance
 
     def flights(self):
         db = connection_factory.getconn()
@@ -52,7 +44,7 @@ class Planet:
             connection_factory.putconn(db)
 
     def get_flight_count(self):
-        return len(self.flights())
+        return self.flight_count
 
 
 class Flight:
