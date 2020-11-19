@@ -1,10 +1,6 @@
-CREATE DOMAIN PHONE AS TEXT CHECK (VALUE ~ '([0-9]{3}\-?[0-9]{3}\-?[0-9]{4})');
-CREATE DOMAIN URL AS TEXT CHECK (VALUE ~
-                                 'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,255}\.[a-z]{2,9}\y([-a-zA-Z0-9@:%_\+.,~#?!&>//=]*)$');
 
-CREATE TYPE APARTMENT_PARAMETER AS ENUM ('Placement', 'Clean', 'Friendly');
-CREATE TYPE ENTERTAINMENT_GENRE AS ENUM ('пляж', 'фестиваль', 'спорт');
-CREATE TYPE SEX AS ENUM ('Мужской', 'Женский', 'Другое');
+
+-- Упрощенная база, чтобы протестировать API на sqlite
 
 CREATE TABLE CONVENIENCE
 (
@@ -19,7 +15,6 @@ CREATE TABLE PERSON
     surname       TEXT  NOT NULL,
     email         TEXT  NOT NULL,
     phone         PHONE NOT NULL,
-    sex           SEX,
     date_of_birth DATE,
     photo         URL
 );
@@ -46,116 +41,10 @@ CREATE TABLE APARTMENT
     cleaning_price INT CHECK ( cleaning_price >= 0 )
 );
 
-CREATE TABLE CONVENIENCE_APARTMENT_TABLE
-(
-    convenience_id INT NOT NULL REFERENCES CONVENIENCE (id),
-    apartment_id   INT NOT NULL REFERENCES APARTMENT (id),
-    PRIMARY KEY (convenience_id, apartment_id)
-);
-
-
 CREATE TABLE PRICE
 (
     id           SERIAL PRIMARY KEY,
     apartment_id INT UNIQUE NOT NULL REFERENCES APARTMENT (id),
     week         INT        NOT NULL CHECK ( week > 0 and week <= 53 ),
     price        INT        NOT NULL CHECK ( price >= 0 )
-);
-
-CREATE TABLE APPLICATION
-(
-    id            SERIAL PRIMARY KEY,
-    renter_id     INT  NOT NULL REFERENCES PERSON (id),
-    apartment_id  INT  NOT NULL REFERENCES APARTMENT (id),
-    period_start  DATE NOT NULL,
-    period_end    DATE NOT NULL,
-    num_of_people SMALLINT CHECK ( num_of_people >= 0 ),
-    comment       TEXT,
-    approved      BOOLEAN,
-    total_price   INT  NOT NULL CHECK ( total_price >= 0 )
-);
-
-CREATE TABLE LANDLORD_REVIEW
-(
-    id                 SERIAL PRIMARY KEY,
-    landlord_person_id INT  NOT NULL REFERENCES PERSON (id),
-    renter_person_id   INT  NOT NULL REFERENCES PERSON (id),
-    apartment_id       INT  NOT NULL REFERENCES APARTMENT (id),
-    date               DATE NOT NULL,
-    text               TEXT,
-    mark               INT  NOT NULL CHECK ( mark <@ int4range(1, 5))
-);
-
-CREATE OR REPLACE FUNCTION process_landlord_review() RETURNS TRIGGER AS
-$landlord_review$
-DECLARE
-    apartment_landlord PERSON;
-    rent_count         INT;
-BEGIN
-    SELECT landlord_id FROM APARTMENT WHERE NEW.apartment_id = id INTO apartment_landlord;
-    IF apartment_landlord != NEW.landlord_person THEN
-        RAISE EXCEPTION 'These landlord does not have such apartment';
-    END IF;
-
-    SELECT COUNT(*)
-    FROM APPLICATION
-    WHERE NEW.apartment_id = apartment_id
-      AND NEW.renter_person_id = renter_id
-      AND approved = TRUE
-    INTO rent_count;
-    IF rent_count == 0 THEN
-        RAISE EXCEPTION 'These renter does not rent such apartment';
-    END IF;
-    RETURN NEW;
-END;
-$landlord_review$ LANGUAGE plpgsql;
-
-CREATE TABLE APARTMENT_MARK
-(
-    id                  SERIAL PRIMARY KEY,
-    landlord_review     LANDLORD_REVIEW     NOT NULL,
-    apartment_parameter APARTMENT_PARAMETER NOT NULL,
-    mark                INT                 NOT NULL CHECK ( mark <@ int4range(1, 5)),
-    UNIQUE (landlord_review, apartment_parameter)
-);
-
-CREATE TABLE RENTER_REVIEW
-(
-    id               SERIAL PRIMARY KEY,
-    renter_person_id INT  NOT NULL REFERENCES PERSON (id),
-    apartment_id     INT  NOT NULL REFERENCES APARTMENT (id),
-    date             DATE NOT NULL,
-    text             TEXT,
-    mark             INT  NOT NULL CHECK ( mark <@ int4range(1, 5))
-);
-
-CREATE OR REPLACE FUNCTION process_renter_review() RETURNS TRIGGER AS
-$renter_review$
-DECLARE
-    rent_count INT;
-BEGIN
-    SELECT COUNT(*)
-    FROM APPLICATION
-    WHERE NEW.apartment_id = apartment_id
-      AND NEW.renter_person_id = renter_id
-      AND approved = TRUE
-    INTO rent_count;
-
-    IF rent_count == 0 THEN
-        RAISE EXCEPTION 'These renter does not rent such apartment';
-    END IF;
-    RETURN NEW;
-END;
-$renter_review$ LANGUAGE plpgsql;
-
-CREATE TABLE entertainment
-(
-    id                  SERIAL PRIMARY KEY,
-    name                TEXT UNIQUE         NOT NULL,
-    country             INT                 NOT NULL REFERENCES COUNTRY (id),
-    latitude            NUMERIC CHECK ( ABS(latitude) <= 90 ),
-    longitude           NUMERIC CHECK ( ABS(latitude) <= 180 ),
-    period_start        DATE                NOT NULL, -- событие на неопределенный срок не может существовать
-    period_end          DATE                NOT NULL,
-    entertainment_genre ENTERTAINMENT_GENRE NOT NULL
 );
