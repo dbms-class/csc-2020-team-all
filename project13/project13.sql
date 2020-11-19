@@ -68,14 +68,13 @@ CREATE TABLE ApplicationTable(
 );
 -- других ключей нет
 
--- В промежуток с date_range_start по date_range_end цена на жильё housing_id равнялась cost
+-- В неделю номер week_number цена на жильё housing_id равнялась cost
 CREATE TABLE PriceTable(
   housing_id INT NOT NULL REFERENCES HousingTable,
-  date_range_start DATE NOT NULL,
-  date_range_end DATE NOT NULL,
+  week_number INT NOT NULL,
   cost NUMERIC CHECK(cost >= 0),
-  PRIMARY KEY(housing_id, date_range_start, date_range_end),
-  CHECK(date_range_start <= date_range_end)
+  PRIMARY KEY(housing_id, week_number), -- стоимость суточного проживания в квартире зависит только от номера недели
+  CHECK(date_range_start <= date_range_end),
 );
 -- других ключей нет
  
