@@ -1,10 +1,13 @@
 CREATE TABLE Facilities_aims(aim_facility TEXT PRIMARY KEY);
 
-CREATE TABLE Countries(country TEXT PRIMARY KEY);
+CREATE TABLE Countries(
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL
+);
 
 --волонтер(имя, телефон, карточка-идентификатор )
 CREATE TABLE Volonteers(
-	id_volonteer INT PRIMARY KEY,    -- уникальный ID волонтера
+	id_volonteer SERIAL PRIMARY KEY,    -- уникальный ID волонтера
 	name_volonteer TEXT NOT NULL , -- не допускаем волонтеров без имени
 	tel TEXT CHECK (tel::TEXT ~ '^(\\d+-?\\d+)*$'::TEXT) -- проверка на формат записи телефона
 );
@@ -34,7 +37,7 @@ CREATE TYPE  sex AS ENUM('M', 'W', 'X'); -- тип для пола спортс�
 -- Описание делегаций: страна, имя руководителя, телефон
 CREATE TABLE Delegation(
 	id_delegation INT PRIMARY KEY, --уникальный ID  у каждой делегации
-	country TEXT UNIQUE NOT NULL REFERENCES Countries(country), --не допускаем делегацию без страны, каждая делегация выступает ровно от одной страны
+	country INT UNIQUE NOT NULL REFERENCES Countries(id), --не допускаем делегацию без страны, каждая делегация выступает ровно от одной страны
 	leader_name TEXT NOT NULL, -- не допускаем делегацию без руководителя   
 	tel TEXT CHECK (tel::TEXT ~ '^(\\d+-?\\d+)*$'::TEXT), --провеяем, что телефон в разумном формате
 	home_facility INT  NOT NULL REFERENCES Facilities(id_facility) -- ссылаемся на id здания. Ключ вида N:1. У каждого делегации только один штаб, но в каждом объекте может быть несколько штабов
