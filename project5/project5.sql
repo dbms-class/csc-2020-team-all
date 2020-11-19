@@ -41,12 +41,12 @@ last_stop_id INT NOT NULL references transport_stop); -- есть только �
 
 --Данный маршрут останавливается в данный тип дня на данной остановке в данное время
 CREATE TABLE route_stop(
-route_id INT NOT NULL references transport_route, --есть описание маршрута с таким айди 1:1
-stop_id INT NOT NULL references transport_stop, --есть одна такая остановка по айди остановки 1:1
+route_id INT NOT NULL references transport_route, --есть описание маршрута с таким айди N:M
+stop_id INT NOT NULL references transport_stop, --есть одна такая остановка по айди остановки N:M
 platform_number INT NOT NULL check(platform_number >= 1),
-primary key (stop_id, platform_number, arrival_time, weekday), --Не может быть совпадений остановок разных маршрутов на одной платформе в одно и то же время в разные дни недели
 arrival_time TIME NOT NULL,
-isweekday BOOLEAN NOT NULL);
+is_working_day BOOLEAN NOT NULL,
+primary key (stop_id, platform_number, arrival_time, is_working_day) --Не может быть совпадений остановок разных маршрутов на одной платформе в одно и то же время в разные дни недели);
 
 --У водителя с данным id такое-то ФИО
 CREATE TABLE driver(

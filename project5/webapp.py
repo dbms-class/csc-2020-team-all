@@ -21,6 +21,43 @@ class App(object):
       return index()
 
     @cherrypy.expose
+    def update_timetable(self, stop_id, platform, _time, route_id, is_working_day=1):
+      if (!is_working_day.isnumeric() and (int(is_working_day) not in [0, 1]) return
+      if (!stop_id.isnumeric()) return
+      if (!platform.isnumeric()) return
+      if (!_time.isnumeric() && !(1 <= int(_time) <= 1440)) return
+      if (!route_id.isnumeric()) return
+
+      db = create_connection(self.args)
+      cur = db.cursor()
+      cur.execute(f"SELECT * FROM route_stop WHERE route_id={route_id} \
+                    and stop_id={stop_id} \
+                    and platform_number={platform} \
+                    and is_working_day={True if is_working_day else False};")
+      result = cur.fetchall()
+
+      if len(result) == 0: 
+        cur.execute(f"INSERT INTO \
+                      route_stop (route_id, stop_id, platform_number, arrival_time, is_working_day) \
+                      VALUES({route_id}, \
+                             {stop_id}, \
+                             {platform}, \
+                             interval '{_time} minute'::TIME, \
+                             {True if is_working_day else False};"
+                    )
+      else:
+        cur.execute(f"UPDATE route_stop \
+                      SET arrival_time = interval '{_time} minute'::TIME \
+                      WHERE route_id={route_id} \
+                        and stop_id={stop_id} \
+                        and platform_number={platform} \
+                        and is_working_day={True if is_working_day else False};"
+                    )
+
+      cur.close()
+      return
+
+    @cherrypy.expose
     @cherrypy.tools.json_out()
     def routes(self):
         with create_connection(self.args) as db:
@@ -70,6 +107,7 @@ class App(object):
             for c in commanders:
                 result.append({"id": c[0], "name": c[1]})
             return result
+
 
 
 cherrypy.config.update({
