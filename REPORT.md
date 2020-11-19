@@ -15,8 +15,7 @@
 
 Основные
 - реализован метод `get_price(country_id, week, max_price?, bed_count?)`
-    - поля `apartment_id` и `apartment_name` заменены на `id` и `name` для
-    консистентности с методами прошлой недели
+    - поля `apartment_id` и `apartment_name` заменены на `id` и `name` для консистентности с методами прошлой недели
 
 Дополнительные
 - `porject0` убран из ветки
