@@ -1,3 +1,4 @@
+
 # encoding: UTF-8
 
 import cherrypy
@@ -15,7 +16,6 @@ class App(object):
     def index(self):
         return "Hello web app"
 
-<<<<<<< HEAD
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
@@ -24,13 +24,6 @@ class App(object):
             cur = db.cursor()
             cur.execute("insert into drugstore_price_list(drugstore_id, drug_id, price,items_count) values (%s, %s, %s, %s) on conflict (drugstore_id, drug_id) do update set items_count = %s", (pharmacy_id, drug_id, price, remainder, remainder))
             
-=======
-    @cherrypy.expose
-    @cherrypy.tools.json_out()
-    def update_retail(self, drug_id=None):
-        with create_connection(self.args) as db:
-            pass
->>>>>>> origin/project7
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
@@ -46,11 +39,7 @@ class App(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-<<<<<<< HEAD
     def pharmacies(self):
-=======
-    def drugstores(self):
->>>>>>> origin/project7
         with create_connection(self.args) as db:
             cur = db.cursor()
             cur.execute("select id, name, address from drugstore")
