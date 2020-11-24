@@ -21,7 +21,12 @@ LaboratoryName TEXT REFERENCES Laboratory (Name)
 -- других ключей не предусмотрено
  );
 
+--строка представляет собой объект Изготовитель
 CREATE TABLE Maker(id SERIAL PRIMARY KEY, name TEXT UNIQUE NOT NULL);
+
+--Множество лекарственных форм
+CREATE TYPE drug_form AS ENUM ('таблетка', 'капсула', 'ампула');
+
 -- строка представляет собой объект Лекарство с его свойствами
 CREATE TABLE Drug(
 Id SERIAL PRIMARY KEY,
@@ -29,7 +34,7 @@ Id SERIAL PRIMARY KEY,
 Trade_name TEXT UNIQUE NOT NULL,
 -- интернациональное имя уникально
 International_name TEXT NOT NULL,
-Form TEXT CHECK(Form IN ('таблетка', 'капсула', 'ампула')),
+Form drug_form,
 Maker_id INT REFERENCES Maker,
 -- N:1 каждое действующее вещество может соответствовать нескольким лекарствам
 ActiveComponentName TEXT REFERENCES ActiveComponent (Name),
