@@ -5,8 +5,8 @@ import cherrypy
 
 from connect import connection_factory
 from connect import parse_cmd_line
-import model
-#import model2 as model
+#import model
+import model2 as model
 from static import index
 
 
@@ -52,6 +52,15 @@ class App(object):
             },
             self.all_planets(planet_id=planet_id)
         ))
+
+    @cherrypy.expose
+    def set_distance(self, planet_id, distance, date):
+        planet = self.all_planets(planet_id=planet_id)
+        if len(planet) == 0:
+            raise cherrypy.HTTPError(404)
+        is_ok = planet[0].set_distance(distance, date)
+        if not is_ok:
+            raise cherrypy.HTTPError(400)
 
     @cherrypy.expose
     @cherrypy.tools.json_out()

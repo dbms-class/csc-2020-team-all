@@ -24,5 +24,18 @@ WITH Names AS (
 INSERT INTO Commander(name, rating)
 SELECT name FROM Names
 
-INSERT INTO Commander(name) VALUES 
+INSERT INTO Commander(name) VALUES
 ('Громозека'), ('Ким'), ('Буран'), ('Зелёный'), ('Горбовский'), ('Ийон Тихий'), ('Форд Префект'), ('Комов'), ('Каммерер'), ('Гагарин'), ('Титов'), ('Леонов'), ('Крикалев'), ('Армстронг'), ('Олдрин');
+
+
+
+alter table flight add column distance numeric(5,2);
+begin;
+update flight set distance=p.distance from planet p where p.id=flight.planet_id;
+alter table planet drop column distance;
+commit;
+
+CREATE OR REPLACE VIEW PlanetView AS
+SELECT P.id, name, AVG(distance) AS avg_distance, COUNT(F.planet_id) AS flight_count
+FROM Planet P LEFT JOIN Flight F ON P.id=F.planet_id
+GROUP BY P.id;

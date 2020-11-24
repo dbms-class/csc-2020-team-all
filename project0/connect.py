@@ -74,15 +74,18 @@ def create_connection_factory(args):
             # conns.append(conn)
             # return conn
             # -----------------------
-            # return pg_pool.getconn()
+            return pg_pool.getconn()
             # -----------------------
-            return pg_driver.connect(user=args.pg_user, password=args.pg_password, host=args.pg_host, port=args.pg_port)
+            # return pg_driver.connect(user=args.pg_user, password=args.pg_password, host=args.pg_host, port=args.pg_port)
+            # db = pg_driver.connect(user=args.pg_user, password=args.pg_password, host=args.pg_host, port=args.pg_port)
+            # db.set_session(autocommit=True)
+            # return db
 
         def close_pg(conn):
             # -----------------------
-            # pg_pool.putconn(conn)
+            pg_pool.putconn(conn)
             # -----------------------
-            conn.close()
+            # conn.close()
 
         return ConnectionFactory(open_fxn=open_pg, close_fxn=close_pg)
 
