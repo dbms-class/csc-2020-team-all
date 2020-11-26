@@ -1,3 +1,7 @@
+26/11/20 Дегтерев,Селиванов
+Цель: Дописать Register и новый эндпоинт Volunter_load
+Итог: Дописан Register, написан view для Volunter_load и добавлен эндпоинт Volunter_load 
+
 19/11/20 Губкин, Дегтерев
 Цель: написать API (хотя бы две из трех)
 Итог: сделали две API /countries, /volonteers
