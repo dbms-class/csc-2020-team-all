@@ -11,9 +11,10 @@ from static import index
 
 @cherrypy.expose
 class App(object):
-    def __init__(self, args, all_planets):
+    def __init__(self, args, all_planets, all_flights):
         self.args = args
         self.all_planets = all_planets
+        self.all_flights = all_flights
 
     @cherrypy.expose
     def start(self):
@@ -22,6 +23,20 @@ class App(object):
     @cherrypy.expose
     def index(self):
         return index()
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def flights(self, flight_id=None, load_commander=True):
+        def to_json(f):
+            base = {"id": f.id, "date": str(f.date)}
+            if load_commander:
+               base.update({"commander": f.commander()})
+            return base
+
+        return list(map(
+            to_json,
+            self.all_flights(flight_id, False)
+        ))
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
@@ -68,5 +83,6 @@ if __name__ == "__main__":
     })
     cherrypy.quickstart(App(
         args=parse_cmd_line(),
-        all_planets=model.all_planets
+        all_planets=model.all_planets,
+        all_flights=model.all_flights
     ))
