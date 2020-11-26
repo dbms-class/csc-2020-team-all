@@ -39,7 +39,7 @@ class App(object):
         cur = db.cursor()
         cur.execute(
           """
-          INSERT INTO Countries(name) VALUES('Russia'),('USA');
+          INSERT INTO Countries(country) VALUES('Russia'),('USA');
           INSERT INTO Volonteers(name_volonteer) VALUES('vasya'),('petya');
           """
         )

@@ -1,6 +1,3 @@
---DROP SCHEMA public CASCADE;
---CREATE SCHEMA public;
-
 CREATE TABLE Facilities_aims
 (
     aim_facility TEXT PRIMARY KEY
@@ -146,11 +143,12 @@ WITH Task_Volonteer as (SELECT Task.id_task as id_task,
                                            JOIN Task_Volonteer TV on TV.volonteer_id = V.id_volonteer
                                            JOIN Athlete A on A.volonteer_id = V.id_volonteer
                                   GROUP BY V.id_volonteer, V.name_volonteer)
-SELECT id_volonteer,
-       name_volonteer,
+SELECT V.id_volonteer,
+       V.name_volonteer,
        sportsman_count,
        total_task_count,
        next_task_id,
        next_task_time
-from Aggregate_Volonteer_Task
-         JOIN Next_Volonteer_Task NT on NT.volonteer_id = id_volonteer;
+from Volonteers V
+         LEFT JOIN Aggregate_Volonteer_Task Agg on Agg.id_volonteer = V.id_volonteer
+         LEFT JOIN Next_Volonteer_Task NT on NT.volonteer_id = V.id_volonteer;
