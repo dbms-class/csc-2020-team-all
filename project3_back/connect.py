@@ -25,7 +25,7 @@ def parse_cmd_line():
                         default=None)
     return parser.parse_args()
 
-#
+
 # Создаёт подключение к постгресу в соответствии с аргументами командной строки.
 def create_connection_pg(args):
     return pg_driver.connect(user=args.pg_user, password=args.pg_password, host=args.pg_host, port=args.pg_port)
