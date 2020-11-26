@@ -21,32 +21,23 @@ class App(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def update_retail(self, medicine_id, pharmacy_id, remainder, price):
+    def update_retail(self, drug_id, pharmacy_id, remainder, price):
         with create_connection(self.args) as db:
             cur = db.cursor()
-
-            cur.execute(
-                "SELECT EXISTS( "
-                "SELECT * FROM Availability "
-                "WHERE pharmacy_id = %s and medicine_id = %s)",
-                medicine_id, pharmacy_id
-            )
-            is_exist = cur.fetchall()
-            if is_exist:
-                cur.execute(
-                    "UPDATE Availability "
-                    "SET remainder = %s, price = %s "
-                    "WHERE pharmacy_id = %s and medicine_id = %s)",
-                    remainder, price, pharmacy_id, medicine_id
+            query = """
+                UPDATE Availability
+                SET price={price}, remainder={remainder}
+                WHERE pharmacy_id={pharmacy_id} AND medicine_id={drug_id};
+                INSERT INTO Availability(pharmacy_id, medicine_id, price, remainder)
+                SELECT {pharmacy_id}, {drug_id}, {price}, {remainder}
+                WHERE NOT EXISTS (
+                    SELECT 1
+                    FROM Availability
+                    WHERE pharmacy_id={pharmacy_id} AND medicine_id={drug_id}
                 )
-            else:
-                cur.execute(
-                    "INSERT INTO Availability "
-                    "VALUES(remainder = %s, price = %s "
-                    "WHERE pharmacy_id = %s and medicine_id = %s)",
-                    remainder, price, pharmacy_id, medicine_id
-                )
-            return []
+            """.format(drug_id=drug_id, pharmacy_id=pharmacy_id, remainder=remainder, price=price)
+            cur.execute(query)
+            return {"status": "OK"}
 
     @cherrypy.expose
     @cherrypy.tools.json_out()

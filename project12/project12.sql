@@ -193,6 +193,7 @@ INSERT INTO Producer(title) VALUES ('Honor'), ('Liberty'), ('DrugDiller');
 INSERT INTO ActiveSubstance(title, formula) VALUES ('Cocaine', '1x-3ch'), ('Cofein', 'H20');
 INSERT INTO Medicine(trade_name, international_trade_name, type_form_id, active_substance_id, producer_id, certificate_info, weight_mg) VALUES ('TradeName', 'International', 1, 1, 1, 'vcx6728', 333);
 INSERT INTO Pharmacy(title, address) VALUES ('Pharmag', 'Petrovka 38');
+INSERT INTO Pharmacy(title, address) VALUES ('Kalarata', 'Berlin');
 INSERT INTO Availability(pharmacy_id, medicine_id, price, remainder) VALUES (1, 1, 30, 239);
 INSERT INTO Storage(address, full_name, bank_card, contact_number) VALUES ('Nevsky 1', 'Shawerma', '7777-7777-7777-7777', '555-23-32');
 INSERT INTO DeliveryAuto(number, maintenance) VALUES ('A777MP77', '2020-02-20');
