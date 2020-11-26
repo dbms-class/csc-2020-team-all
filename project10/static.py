@@ -12,30 +12,30 @@ def index():
 <body>
 <form class="col-6">
     <div class="form-group">
-        <label for="planetSelect">Планета</label>
-        <select class="form-control" id="planetSelect">
+        <label for="stopsSelect">Остановка</label>
+        <select class="form-control" id="stopsSelect">
         </select>
     </div>
     <div class="form-group">
-        <label for="commanderSelect">Капитан</label>
-        <select class="form-control" id="commanderSelect">
+        <label for="routesSelect">Маршрут</label>
+        <select class="form-control" id="routesSelect">
         </select>
     </div>
 </form>
 <script lang="js">
     function loadData() {
-        const planetSelect = $('#planetSelect');
-        $.getJSON('/planets', function (countries) {
-           countries.forEach(function (value) {
-               $("<option>").text(value.name).attr("value", value.id)
-                   .appendTo(planetSelect);
+        const stopsSelect = $('#stopsSelect ');
+        $.getJSON('/stops', function (stop) {
+           stop.forEach(function (value) {
+               $("<option>").text(value.address).attr("value", value.platforms)
+                   .appendTo(stopsSelect);
            })
         });
-        const commanderSelect = $('#commanderSelect');
-        $.getJSON('/commanders', function (commanders) {
-            commanders.forEach(function (value) {
-                $("<option>").text(value.name).attr("value", value.id)
-                    .appendTo(commanderSelect);
+        const routesSelect = $('#routesSelect');
+        $.getJSON('/routes', function (route) {
+            route.forEach(function (value) {
+                $("<option>").text(value.route).attr("value", value.start_stop_id)
+                    .appendTo(routesSelect);
             });
         });
     }
