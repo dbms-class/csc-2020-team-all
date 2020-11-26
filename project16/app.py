@@ -6,13 +6,9 @@ import cherrypy
 import cherrypy_cors
 
 from connect import parse_cmd_line
-from connect import create_connection
-<<<<<<< HEAD
-from connect import connection_factory
-
-=======
->>>>>>> origin/project16
-from static import index
+from connect import create_connection, connection_factory
+from static  import index
+from peewee import *
 
 @cherrypy.expose
 class App(object):
@@ -41,7 +37,6 @@ class App(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-<<<<<<< HEAD
     def sportsman(self):
         db = connection_factory.getconn()
         try:
@@ -54,7 +49,9 @@ class App(object):
           return result
         finally:
           connection_factory.putconn(db)
-=======
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
     def commanders(self):
         with create_connection(self.args) as db:
             cur = db.cursor()
@@ -64,53 +61,38 @@ class App(object):
             for c in commanders:
                 result.append({"id": c[0], "name": c[1]})
             return result
->>>>>>> origin/project16
   
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def countries(self):
-<<<<<<< HEAD
         db = connection_factory.getconn()
         try:
-=======
-        with create_connection(self.args) as db:
->>>>>>> origin/project16
-            cur = db.cursor()
-            cur.execute("SELECT * FROM Countries;")
-            result = []
-            commanders = cur.fetchall()
-            for c in commanders:
-                result.append({"id": c[0], "name": c[1]})
-            return result
-<<<<<<< HEAD
+          cur = db.cursor()
+          cur.execute("SELECT * FROM Countries;")
+          result = []
+          commanders = cur.fetchall()
+          for c in commanders:
+            result.append({"id": c[0], "name": c[1]})
+          return result
         finally:
           connection_factory.putconn(db)
-=======
->>>>>>> origin/project16
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def volunteers(self):
-<<<<<<< HEAD
         db = connection_factory.getconn()
         try:
-        # with create_connection(self.args) as db:
-=======
-        with create_connection(self.args) as db:
->>>>>>> origin/project16
-            cur = db.cursor()
-            cur.execute("SELECT id, name FROM Volunteers;")
-            result = []
-            commanders = cur.fetchall()
-            for c in commanders:
-                result.append({"id": c[0], "name": c[1]})
-            return result
-<<<<<<< HEAD
+              cur = db.cursor()
+              cur.execute("SELECT id, name FROM Volunteers;")
+              result = []
+              commanders = cur.fetchall()
+              for c in commanders:
+                  result.append({"id": c[0], "name": c[1]})
+              return result
         finally:
           connection_factory.putconn(db)
 
     @cherrypy.expose
-
     def register(self, sportsman, country, volunteer_id):
         status_message = 'SUCCESS'
         db = connection_factory.getconn()
@@ -129,28 +111,37 @@ class App(object):
           connection_factory.putconn(db)
         return status_message
 
+    # @cherrypy.expose
+    # @cherrypy.tools.json_out()
+    # def volunteers(self):
+    # def volunteer_load(self, volunteer_id = None, sportsman_count = None, total_task_count = None):
+    #     db = connection_factory.getconn()
+    #     try:
+    #       Volunteers = Table('Volunteers').bind(db)
+    #       Task = Table('Task').bind(db)
+    #       Sportsmens = Table('Sportsmens').bind(db)
+    #       volunt = Volunteers.select(Volunteers.c.ID, Volunteers.c.name)
+    #       if volunteer_id is not None:
+    #         volunt = volunt.where(Volunteers.c.id == volunteer_id)
+    #       Task = Table('Task').bind(db)
+    #       volunt = volunt.select().join(Task, on=(Task.volunteer_id == volunt.ID))
 
-=======
+    #       if total_task_count is not None:
+    #         volunt_count = volunt.select(Volunteers.c.ID, fn.COUNT(Volunteers.c.ID)).groupby(volunt.ID).having(fn.COUNT(Volunteers.c.ID) >= total_task_count)
+    #         volunt = volunt.select().join(Task, on=(Task.volunteer_id == volunt.ID))
 
-    @cherrypy.expose
-    def register(self, sportsman, country, volunteer_id):
-        status_message = 'SUCCESS'
-        try:
-          with create_connection(self.args) as db:
-            cur = db.cursor()
-            cur.execute("SELECT id FROM Countries WHERE Countries.name=%s;", (country,))
-            country_id, volunteer_id = int(cur.fetchone()[0]), int(volunteer_id)
-            if sportsman.isdigit():
-              sportsman_id = int(sportsman)
-              cur.execute("UPDATE Sportsmens SET country_id=%s, volunteer_id=%s WHERE id=%s;", (country_id, volunteer_id, sportsman_id))
-            else:
-              cur.execute("INSERT INTO Sportsmens(name, gender, country_id, object_id, volunteer_id) VALUES(%s, %s, %s, 1, %s);",
-              			 (sportsman, 'm', country_id, volunteer_id))
-        except Exception as e:
-          status_message = f"Error: {e}"
-        return status_message
+    #         volunt = volunt_count.select(volunt_count.c.ID).join(volunt, on=(volunt_count.ID == volunt.ID))
 
->>>>>>> origin/project16
+    #       volunt = volunt.select().join(Sportsmens, on=(Sportsmens.volunteer_id == volunt.ID))
+    #       if sportsman_count is not None:
+    #         volunt_count = volunt.select(Volunteers.c.ID, fn.COUNT(Volunteers.c.ID)).groupby(volunt.ID).having(fn.COUNT(Volunteers.c.ID) >= sportsman_count)
+    #         volunt = volunt.select().join(Task, on=(Task.volunteer_id == volunt.ID))
+
+    #     finally:
+    #       connection_factory.putconn(db)
+
+  
+
 def run():
     cherrypy_cors.install()    
     cherrypy.config.update({
@@ -165,8 +156,4 @@ def run():
     cherrypy.quickstart(App(parse_cmd_line()), config=config)
 
 if __name__ == '__main__':
-<<<<<<< HEAD
   run()
-=======
-  run()
->>>>>>> origin/project16
