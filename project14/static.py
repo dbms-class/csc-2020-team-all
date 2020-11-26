@@ -21,6 +21,15 @@ def index():
         <select class="form-control" id="albumSelect">
         </select>
     </div>
+    <div class="form-group">
+        <label for="trackName">Название трека</label>
+        <input type="text" class="form-control" id="trackName" placeholder="Yellow Submarine">
+    </div>
+    <div class="form-group">
+        <label for="trackLength">Длина трека (сек.)</label>
+        <input type="number" class="form-control" id="trackLength" placeholder="158">
+    </div>
+    <button id="submit" class="btn btn-primary">Обновить альбом</button>
 </form>
 <script lang="js">
     function loadData() {
@@ -39,8 +48,26 @@ def index():
             });
         });
     }
+    function updateAlbum() {
+      let data = {
+          "album_id": $("#albumSelect").val(),
+          "track_name": $("#trackName").val(),
+          "track_length": $("#trackLength").val()
+        };
+        console.dir(data);
+      $.ajax({
+        url: "/update_album",
+        data: data
+      }).done(function() {
+        console.log("done!");
+      });
+    }
     $(document).ready(function () {
         loadData();
+        $("#submit").on("click", function(e) {
+          updateAlbum();
+          e.preventDefault();
+        });
     });
 </script>
 </body>

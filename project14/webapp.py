@@ -12,7 +12,24 @@ class App(object):
     @cherrypy.expose
     def index(self):
       return index()
-      
+    
+    # не генерится идентификатор для таблицы Track при вставке
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def update_album(self, album_id, track_name, track_length=None):
+      with create_connection(self.args) as db:
+        cur = db.cursor()
+        cur.execute("SELECT id FROM Track WHERE album_id=? AND name=?", (album_id, track_name))
+
+        track_id = cur.fetchone()
+        if not track_id is None:
+          if track_length is None:
+            raise cherrypy.HTTPError(status=400)
+          
+          cur.execute("UPDATE Track SET length_s=? WHERE id=?", (track_length, track_length))
+        else:
+          cur.execute("INSERT INTO Track (name, album_id, length_s) VALUES (?, ?, ?)", (track_name, album_id, track_length))
+
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def bands(self):
@@ -43,9 +60,7 @@ class App(object):
                         GROUP BY album_id
                     )
                     SELECT A.id, A.name, A.band_id, album_track_counts.track_count
-                    FROM Album A
-                    WHERE album_track_counts.album_id = A.id
-                """)
+                    FROM Album A LEFT JOIN album_track_counts ON a.id=album_track_counts.album_id""")
             else:
                 raise NotImplementedError
             albums = cur.fetchall()
