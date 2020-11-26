@@ -17,22 +17,8 @@ CREATE TABLE Country(
 CREATE TABLE Region(
 	id SERIAL PRIMARY KEY, 
 	name TEXT, 
-	country_id INT REFERENCES Country(id)
-	UNIQUE (name, country_id), -- в одной стране не бывает двух регионов с одинаковым названием.
-);
-
--- Таблица для стран
-CREATE TABLE Country(
-	id SERIAL PRIMARY KEY, 
-	name TEXT NOT NULL UNIQUE
-);
-
--- Таблица для регионов
-CREATE TABLE Region(
-	id SERIAL PRIMARY KEY, 
-	name TEXT, 
-	country_id INT REFERENCES Country(id)
-	UNIQUE (name, country_id), -- в одной стране не бывает двух регионов с одинаковым названием.
+	country_id INT REFERENCES Country(id),
+	UNIQUE (name, country_id) -- в одной стране не бывает двух регионов с одинаковым названием.
 );
 
 -- Строка представляет из себя объект группа с его свойствами
@@ -51,14 +37,14 @@ CREATE TABLE Album(
 	group_id INT REFERENCES Groups(id), 
 	genre_name TEXT REFERENCES Genre(name), 
 	format_name TEXT REFERENCES Format(name), 
-	year_of_album_creation YEAR,  
+	year_of_album_creation INT 
 );
 
 -- Строка представляет из себя объект музыкант с его свойствами
 CREATE TABLE Musician(
 	id SERIAL PRIMARY KEY, -- id музыканта, хотим использовать этот ключ для связи M:N,
 	name TEXT NOT NULL, 
-	year_of_birth YEAR
+	year_of_birth INT
 );
 
 -- Строка представляет из себя объект трек с его свойствами
@@ -67,7 +53,7 @@ CREATE TABLE Track(
 	id SERIAL PRIMARY KEY, -- id трека,
 	name TEXT, 
 	album_id INT REFERENCES Album(id), 
-	length_in_seconds INT CHECK(size > 0),
+	length_in_seconds INT CHECK(length_in_seconds > 0)
 );
 
 -- Строка представляет из себя объект сотрудник с его свойствами.
@@ -83,6 +69,12 @@ CREATE TABLE Role(
 	role_name TEXT NOT NULL UNIQUE
 );
 
+-- Таблица для возможных ролей сотрудников лейбла.
+CREATE TABLE Employee_Role(
+	id SERIAL PRIMARY KEY, -- id роли,
+	role_name TEXT NOT NULL UNIQUE
+);
+
 -- Таблица для хранения информации об участии музыканта в треке. Музыкант с “musician_id” участвовал в песне “track_id” и имел роль "role_id".
 CREATE TABLE Musician_Track(
 -- связь M:N между музыкантами и треками. Каждый музыкант может записывать разные треки, а создании одного трека может участвовать несколько музыкантов.
@@ -90,7 +82,7 @@ CREATE TABLE Musician_Track(
 	musician_id INT REFERENCES Musician(id), 
 	track_id INT REFERENCES Track(id), 
 	role_id INT REFERENCES Role(id),
-	UNIQUE (musician_id, track_id, role)
+	UNIQUE (musician_id, track_id, role_id)
 );
 
 -- Таблица для хранения истории существования музыканта в группе. Музыкант с ид “musician_nameмузыкант_ид” состоял/состоит в группе с ид “ group_nameгруппа_ид” с “дата начала” по “дата окончания”
@@ -109,6 +101,7 @@ CREATE TABLE Employee_Album(
 -- Один сотрудник может принимать только одно участие в альбоме, поэтому эта пара уникальна
 	employee_id INT REFERENCES Employee(id), 
 	album_id INT REFERENCES Album(id),
+	role_id INT REFERENCES Employee_Role(id),
 	UNIQUE (employee_id, album_id)
 );
 
@@ -121,7 +114,6 @@ CREATE TABLE Album_production(
 	adaptive_name_of_album TEXT NOT NULL,
 	country_id INT REFERENCES Country(id),
 	region_id INT REFERENCES Region(id), 
-	device Device, 
-	UNIQUE (album_id, adaptive_name_of_album, region_id, device)
-	CHECK(((adaptive_name_of_album IS NULL) OR (region_id IS NULL)) AND ((adaptive_name_of_album IS NOT NULL) OR (region_id IS NOT NULL)))
+	device Device NOT NULL, 
+	CHECK(((country_id IS NULL) OR (region_id IS NULL)) AND ((country_id IS NOT NULL) OR (region_id IS NOT NULL)))
 );
