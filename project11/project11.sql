@@ -21,7 +21,14 @@ CREATE TABLE object_ (
 );
 
 -- Страны (думаю смысл понятен и можно не перечислять все страны)
-CREATE TYPE country AS ENUM ('Россия', 'Китай', 'Швеция');
+CREATE TABLE countries (
+    id SERIAL, 
+    name TEXT NOT NULL,
+
+    -- Ключи
+	PRIMARY KEY(id)
+	-- Других ключей нет
+);
 
 -- Информация о руководителях
 CREATE TABLE leader(
@@ -38,7 +45,7 @@ CREATE TABLE leader(
 CREATE TABLE delegation(
     id SERIAL PRIMARY KEY,
     -- У одной страны только одна национальная делегация
-	country COUNTRY NOT NULL UNIQUE,
+	country INT NOT NULL UNIQUE,
     -- В одном из объектов должен быть штаб делегации
 	house_id INT NOT NULL,
 	name TEXT,
@@ -55,10 +62,9 @@ CREATE TABLE delegation(
 
 -- Волонтер определяется своей id картой и при этом волонтеры должны иметь уникальные телефоны.
 -- Может быть неконсистентность, что id волонтера совпадает с id спортсмена.
-CREATE TABLE volunteer(
+CREATE TABLE volunteers(
     id SERIAL PRIMARY KEY,
     -- card_id может принадлежать только одному волонтеру
-    card_id VARCHAR(5) NOT NULL UNIQUE,
     name TEXT NOT NULL,
     -- Один телефон принадлежит только одному волонтеру
 	telephone TEXT NOT NULL UNIQUE
@@ -75,19 +81,19 @@ CREATE TYPE sex AS ENUM('Мужской', 'Женский', 'Custom');
 CREATE TABLE sportsman(
     id SERIAL PRIMARY KEY,
     --card_id может принадлежать только одному спортсмену
-    card_id VARCHAR(5) NOT NULL UNIQUE,
-    name TEXT NOT NULL, 
-    age SMALLINT NOT NULL,
-    weight SMALLINT NOT NULL, 
-    height SMALLINT NOT NULL, 
-    sex SEX NOT NULL,
-    delegation_id INT NOT NULL, 
-    house_id INT NOT NULL,
-    volunteer_id INT,
+    name TEXT NOT NULL,
+    age SMALLINT,
+    weight SMALLINT, 
+    height SMALLINT,
+    sex SEX,              -- остальные ограничения удалены, т.к. нарушаются условия нового задания.
+    delegation_id INT,
+    house_id INT,
+    volunteer_id INT NOT NULL,
+    country_id INT NOT NULL,
 	
     -- Ключи
     -- Связь 1:N между волонтерами и спортсменами. Один волонтер может обслуживать много спортсменов.
-	FOREIGN KEY(volunteer_id) REFERENCES volunteer,
+	FOREIGN KEY(volunteer_id) REFERENCES volunteers,
     -- Других ключей нет
 	
 	-- Связь N:1 между спортсмена и делегациями. Каждый спортсмен может быть только в одной делегации. В каждой делегации может быть много спортсменов.
@@ -194,7 +200,7 @@ CREATE TABLE volunteer_task(
     -- Других ключей нет
     
     -- Связь 1:N между волонтерами и заданиями. Одно задание может быть назначено только одному волонтеру. Один волонтер может выполнять разные задания.
-	FOREIGN KEY(volunteer_id) REFERENCES volunteer
+	FOREIGN KEY(volunteer_id) REFERENCES volunteers
 );
 
 -- Информация о транспортном средстве:
@@ -223,3 +229,65 @@ CREATE TABLE tasks_to_vehicle(
 	FOREIGN KEY(task_id) REFERENCES volunteer_task(id),
 	FOREIGN KEY(vehicle_id) REFERENCES vehicle(plate_id)
 );
+
+CREATE VIEW VolunteerLoad AS
+  WITH VolunteerSportsmenCount AS (
+      SELECT 
+        V.id as volunteer_id, 
+        V.name as volunteer_name, 
+        Count(S.id) as sportsman_count
+      FROM volunteers V LEFT JOIN Sportsman S ON S.volunteer_id = V.id
+      GROUP BY V.id
+    ),
+
+    CurrentTasks AS (
+      SELECT 
+        V.id as volunteer_id,
+        VT.id as task_id,
+        VT.date as date,
+        VT.time as time
+      FROM 
+        volunteers V LEFT JOIN (
+          SELECT *
+          FROM Volunteer_task VT 
+          WHERE VT.date + VT.time > current_timestamp
+        ) VT
+        ON V.id = VT.volunteer_id
+    ),
+
+    VolunteerTaskCount AS (
+        SELECT 
+        CT.volunteer_id, 
+        Count(task_id) as total_task_count
+        FROM CurrentTasks CT
+        GROUP BY CT.volunteer_id
+      ),
+
+    NextTaskTime AS (
+      SELECT 
+      CT.volunteer_id, 
+      MIN(CT.date + CT.time) as next_task_time
+      FROM CurrentTasks as CT
+      GROUP BY CT.volunteer_id
+    ),
+    
+    NextTaskId AS (
+      SELECT
+        CT.task_id as next_task_id,
+        CT.volunteer_id
+      FROM CurrentTasks CT LEFT JOIN NextTaskTime NTT
+        ON CT.date + CT.time = NTT.next_task_time AND CT.volunteer_id = NTT.volunteer_id
+    )
+
+  SELECT
+    VS.volunteer_id,
+    VS.volunteer_name,
+    VS.sportsman_count,
+    VT.total_task_count,
+    NTT.next_task_time,
+    NTI.next_task_id
+  FROM VolunteerSportsmenCount VS LEFT JOIN VolunteerTaskCount VT
+    ON VS.volunteer_id = VT.volunteer_id LEFT JOIN NextTaskTime NTT
+    ON VS.volunteer_id = NTT.volunteer_id LEFT JOIN NextTaskId NTI
+    ON VS.volunteer_id = NTI.volunteer_id;
+
