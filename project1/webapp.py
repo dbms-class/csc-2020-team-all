@@ -3,11 +3,13 @@
 ## Веб сервер
 import cherrypy
 import cherrypy_cors
+import re
 
 from connect import parse_cmd_line
 from connect import create_connection
 from static import index
 
+DIGITS_RE = re.compile('\d+')
 
 @cherrypy.expose
 class App(object):
@@ -42,31 +44,35 @@ class App(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def register(self, sportsman, country, volunteer_id, height, weight, age, gender=None):
+    def register(self, sportsman, country, volunteer_id):
         with create_connection(self.args) as db:
             cur = db.cursor()
             cur.execute("SELECT * FROM Countries_delegation WHERE country_name = %s", (str(country),))
-            country_database = cur.fetchone()
-            print(country_database)
-            if country_database is None:
-                raise cherrypy.HTTPError(
-                    400,
-                    f"There is no delegation for country {country}"
-                )
+            delegation = cur.fetchone()
+            if delegation is None:
+                raise cherrypy.HTTPError(404, "There is no delegation for country " + country)
+# http://csc-2020-team-all-1.dmitrybarashev.repl.co/register?country=Country1&sportsman=asd&volunteer_id=1
+            cur.execute("SELECT * FROM Volunteers WHERE id = %s", (int(volunteer_id),))
+            volunteer = cur.fetchone()
+            if volunteer is None:
+                raise cherrypy.HTTPError(404, "There is no volunteer id=" + volunteer_id)
 
-            a = cur.execute(
-                "INSERT INTO Athletes (name, gender, height, weight, age, delegation_id, volunteer_id) values (%s, "
-                "%s, %s, %s, %s, %s, %s)",
-                (sportsman, gender, int(height), int(weight), int(age), country_database[0], int(volunteer_id)))
-            print(a)
-
-            return {"id": country_database[0], "name": country_database[1]}
+            if DIGITS_RE.match(sportsman) != None:
+                cur.execute(
+                  "UPDATE Athletes SET delegation_id = %s, volunteer_id = %s WHERE id = %s", 
+                  (delegation[0], int(volunteer_id), sportsman))
+            else:
+                cur.execute(
+                    "INSERT INTO Athletes (name, delegation_id, volunteer_id) values (%s, %s, %s)",
+                    (sportsman, delegation[0], int(volunteer_id)))
+            
+            cherrypy.response.status = 201
 
 
 def run():
     cherrypy_cors.install()
     cherrypy.config.update({
-        'server.socket_host': '127.0.0.1',
+        'server.socket_host': '0.0.0.0',
         'server.socket_port': 12345,
     })
     config = {

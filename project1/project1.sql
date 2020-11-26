@@ -60,9 +60,9 @@ CREATE TABLE Athletes
     id            SERIAL PRIMARY KEY,
     name          TEXT                                     NOT NULL,
     gender        GENDER_TYPE,
-    height        INT                                      NOT NULL check ( height > 0 ),
-    weight        DECIMAL(5, 2)                            NOT NULL check ( weight > 0 ),
-    age           INT                                      NOT NULL check ( age > 0 ),
+    height        INT                                      check ( height > 0 ),
+    weight        DECIMAL(5, 2)                            check ( weight > 0 ),
+    age           INT                                      check ( age > 0 ),
     -- каждый атлет ровно из одной делегации, 1:M
     delegation_id INT REFERENCES National_delegations (id) NOT NULL,
     -- за каждым атлетом закреплен волонтер, 1:M
@@ -180,5 +180,27 @@ CREATE TABLE Assignees
     unique (task_id, volunteer_id)
 );
 
-select *
-from Volunteers;
+
+CREATE VIEW Next_Task AS
+SELECT a.volunteer_id, t.id, t.datetime
+FROM volunteer_tasks t
+         JOIN assignees a ON t.id = a.task_id
+         JOIN volunteers v ON v.id = a.volunteer_id
+         JOIN (SELECT a.volunteer_id, MIN(t.datetime) AS t
+               FROM volunteer_tasks t
+                        JOIN assignees a ON t.id = a.task_id
+                        JOIN volunteers v ON v.id = a.volunteer_id
+               WHERE t.datetime > now()
+               GROUP BY a.volunteer_id) mt ON a.volunteer_id = mt.volunteer_id AND mt.t = t.datetime;
+
+CREATE VIEW volunteer_load AS
+SELECT v.id,
+    v.name,
+    s.c AS sportsman_count,
+    t.c AS total_task_count,
+    nt.id AS next_task_id,
+    nt.datetime AS next_task_time
+FROM volunteers v
+         JOIN (SELECT volunteer_id, COUNT(*) c FROM athletes GROUP BY volunteer_id) s ON v.id = s.volunteer_id
+         JOIN (SELECT volunteer_id, COUNT(*) c FROM assignees GROUP BY volunteer_id) t ON v.id = t.volunteer_id
+         JOIN Next_Task nt ON nt.volunteer_id = v.id 
