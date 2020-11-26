@@ -4,8 +4,11 @@ from webapp import App
 from model2 import Planet
 
 
-def test_all_planets():
-    return [Planet(1, "foo", 50, 3), Planet(2, "bar", 70, 0)]
+def test_all_planets(planet_id=None):
+    return filter(
+        lambda p: planet_id is None or p.id == int(planet_id),
+        [Planet(1, "foo", 50, 3), Planet(2, "bar", 70, 0)]
+    )
 
 
 class AppTest(unittest.TestCase):
