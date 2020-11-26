@@ -5,7 +5,6 @@ import cherrypy
 
 from connect import connection_factory
 from connect import parse_cmd_line
-#import model
 import model2 as model
 from static import index
 
@@ -27,22 +26,6 @@ class App(object):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def planets(self, planet_id=None):
-        return list(map(
-            lambda p: {
-                "id": p.id,
-                "name": p.get_name(),
-                "distance": int(p.get_distance()),
-                "flight_count": p.get_flight_count()
-            },
-            filter(
-                lambda p: planet_id is None or p.id == int(planet_id),
-                self.all_planets()
-            )
-        ))
-
-    @cherrypy.expose
-    @cherrypy.tools.json_out()
-    def planets2(self, planet_id=None):
         return list(map(
             lambda p: {
                 "id": p.id,

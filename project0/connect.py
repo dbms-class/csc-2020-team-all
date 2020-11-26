@@ -14,7 +14,7 @@ from psycopg2 import pool
 import sqlite3 as sqlite_driver
 
 from contextlib import contextmanager
-
+from playhouse.db_url import connect
 # Разбирает аргументы командной строки.
 # Выплевывает структуру с полями, соответствующими каждому аргументу.
 def parse_cmd_line():
@@ -64,28 +64,12 @@ def create_connection_factory(args):
     if args.sqlite_file is not None:
         return ConnectionFactory(open_fxn=open_sqlite, close_fxn=close_sqlite)
     else:
-        # Создаёт подключение к постгресу в соответствии с аргументами командной строки.
-        pg_pool = pool.SimpleConnectionPool(1, 5,
-                                  user=args.pg_user, password=args.pg_password, host=args.pg_host, port=args.pg_port)
-        # conns = []
+
         def open_pg():
-            # nonlocal conns
-            # conn = pg_driver.connect(user=args.pg_user, password=args.pg_password, host=args.pg_host, port=args.pg_port)
-            # conns.append(conn)
-            # return conn
-            # -----------------------
-            return pg_pool.getconn()
-            # -----------------------
-            # return pg_driver.connect(user=args.pg_user, password=args.pg_password, host=args.pg_host, port=args.pg_port)
-            # db = pg_driver.connect(user=args.pg_user, password=args.pg_password, host=args.pg_host, port=args.pg_port)
-            # db.set_session(autocommit=True)
-            # return db
+            return connect(f"postgres+pool://{args.pg_user}:{args.pg_password}@{args.pg_host}:{args.pg_port}/{args.pg_database}")
 
         def close_pg(conn):
-            # -----------------------
-            pg_pool.putconn(conn)
-            # -----------------------
-            # conn.close()
+            conn.close()
 
         return ConnectionFactory(open_fxn=open_pg, close_fxn=close_pg)
 

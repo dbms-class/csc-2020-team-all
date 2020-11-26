@@ -1,26 +1,26 @@
 from connect import connection_factory
 
+from peewee import *
+
+
 def all_planets(planet_id = None):
     db = connection_factory.getconn()
     try:
-        cur = db.cursor()
-        if planet_id is None:
-            cur.execute("SELECT id, name, avg_distance, flight_count FROM PlanetView")
-        else:
-            cur.execute("SELECT id, name, avg_distance, flight_count FROM PlanetView WHERE id=%s", (planet_id,))
-        result = []
-        for p in cur.fetchall():
-            result.append(Planet(p[0], p[1], p[2], p[3]))
-        return result
+        PlanetView = Table('planetview').bind(db)
+        q = PlanetView.select(PlanetView.c.id, PlanetView.c.name, PlanetView.c.avg_distance, PlanetView.c.flight_count)
+        if planet_id is not None:
+            q = q.where(PlanetView.c.id == planet_id)
+        q = q.objects(Planet)
+        return [p for p in q]
     finally:
         connection_factory.putconn(db)
 
 
 class Planet:
-    def __init__(self, id, name, distance, flight_count):
+    def __init__(self, id, name, avg_distance, flight_count):
         self.id = id
         self.name = name
-        self.distance = distance
+        self.distance = avg_distance
         self.flight_count = flight_count
 
     def get_name(self):
@@ -49,27 +49,24 @@ class Planet:
     def txn(self, work):
         db = connection_factory.getconn()
         try:
-            return work(db)
+            with db.atomic() as txn:
+                return work(db)
         finally:
-            db.commit()
             connection_factory.putconn(db)
 
     def set_distance(self, distance, flight_date):
         return self.txn(lambda db: self.set_distance_work(db, distance, flight_date))
 
     def set_distance_work(self, db, distance, flight_date):
-        cur = db.cursor()
-        cur.execute("UPDATE Flight SET distance=%s WHERE planet_id=%s AND date=%s", (distance, self.id, flight_date))
-        if cur.rowcount > 0:
-           return True
-        cur.execute("SELECT MAX(id) FROM Flight")
-        maxId = cur.fetchone()[0]
-        cur.execute("INSERT INTO Flight (id, planet_id, date) VALUES (%s, %s, %s)", (maxId + 1, self.id, flight_date))
-        if cur.rowcount == 0:
-           return False
-        cur.execute("UPDATE Flight SET distance=%s WHERE planet_id=%s AND date=%s", (distance, self.id, flight_date))
-        result = cur.rowcount > 0
-        return result
+        f = Table('flight').bind(db)
+        rowcount = f.update(distance=distance).where(f.c.planet_id == self.id and f.c.date == flight_date).execute()
+        if rowcount > 0:
+            return True
+
+        nextId = f.select(fn.MAX(f.c.id)).scalar() + 1
+        f.insert(id=nextId, planet_id=self.id, date=flight_date).execute()
+        return f.update(distance=distance).where(f.c.id == nextId).execute() == 1
+
 
 class Flight:
     def __init__(self, id):
