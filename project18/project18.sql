@@ -117,17 +117,14 @@ CREATE TABLE Application (
     CHECK(date_start < date_end)
 );
 
--- Оценки пользователей о жилье: оценка id дана на апартаменты appartment_id и содержит текст review
+-- Отзывы пользователей о жилье: отзыв id дается на апартаменты, указанные в заявке application_id, содержит дату отзыва и текст review
 CREATE TABLE BookingReview (
     id SERIAL PRIMARY KEY,
-    user_id INT NOT NULL,
     application_id INT NOT NULL,
     date DATE NOT NULL,
     review TEXT,
     -- связь 1:M заявок и отзывов. К одной заявке может быть несколько отзывов, но для отзыва заявка указана однозначно.
     FOREIGN KEY(application_id) REFERENCES Application(id),
-    -- связь 1:M арендаторов и отзывов. Арендатор оставляет много отзывов, каждый из которых имеет лишь одного автора
-    FOREIGN KEY(user_id) REFERENCES Users(id)
 );
 
 -- Таблица с результатами оценки жилья арендатором: ревью с BookingReview_id имеет оценку score по параметру param; других ключей быть не должно
