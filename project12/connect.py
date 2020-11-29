@@ -5,6 +5,7 @@ import psycopg2 as pg_driver
 # Драйвер SQLite3
 import sqlite3 as sqlite_driver
 
+
 # Разбирает аргументы командной строки.
 def parse_cmd_line():
     parser = argparse.ArgumentParser(description='Эта программа учёта лекарств в аптеках')
@@ -28,7 +29,6 @@ def create_connection_sqlite(args):
 
 
 def create_connection(args):
-    print(args)
     if args.sqlite_file is not None:
         print('Use SQLite')
         return create_connection_sqlite(args)
