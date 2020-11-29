@@ -12,11 +12,9 @@ INSERT INTO Producer(title)
 INSERT INTO ActiveSubstance(title, formula)
     VALUES ('Cocaine', '1x-3ch'), ('Cofein', 'H20');
 INSERT INTO Medicine(trade_name, international_trade_name, type_form_id, active_substance_id, producer_id, certificate_info, weight_mg)
-    VALUES ('TradeName', 'International', 1, 1, 1, 'vcx6728', 333);
+    VALUES ('Fuflomicin', 'Placebo', 1, 1, 1, 'vcx6728', 333), ('Nurofen', 'Ibuprofen', 2, 2, 3, 'vcx6728', 333);
 INSERT INTO Pharmacy(title, address)
-    VALUES ('Pharmag', 'Petrovka 38');
-INSERT INTO Pharmacy(title, address)
-    VALUES ('Kalarata', 'Berlin');
+    VALUES ('Apteka #38', 'Petrovka 38'), ('Apteka #7', 'Nevsky 7');
 INSERT INTO Availability(pharmacy_id, medicine_id, price, remainder)
     VALUES (1, 1, 30, 239);
 INSERT INTO Storage(address, full_name, bank_card, contact_number)

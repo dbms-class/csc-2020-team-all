@@ -46,9 +46,8 @@ class App(object):
         with self.connection_factory.conn() as db:
             cur = db.cursor()
             query = """
-                SELECT M.id, M.trade_name, A.title as inn
-                FROM Medicine M JOIN ActiveSubstance A
-                ON M.active_substance_id=A.id
+                SELECT id, trade_name, international_trade_name
+                FROM Medicine
             """
             cur.execute(query)
             result = []
@@ -63,7 +62,7 @@ class App(object):
         with self.connection_factory.conn() as db:
             cur = db.cursor()
             query = """
-                SELECT id, title num, address
+                SELECT id, title, address
                 FROM Pharmacy
             """
             cur.execute(query)

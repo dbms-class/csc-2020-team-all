@@ -39,7 +39,7 @@ CREATE TABLE Laboratory
 -- Информация о сертификате
 CREATE TABLE CertificateInfo
 (
-   number        varchar(40) UNIQUE PRIMARY KEY,
+   number        varchar(40) PRIMARY KEY,
    end_date      DATE        NOT NULL CHECK (end_date > CURRENT_DATE),
    laboratory_id integer     NOT NULL,
 
@@ -85,7 +85,7 @@ CREATE TABLE Medicine
            REFERENCES Producer(id),
  -- ссылка на тип формы
     FOREIGN KEY (type_form_id)
-           REFERENCES Producer(id)
+           REFERENCES Type_Form(id)
 );
 
 -- Информация об аптеке
@@ -113,7 +113,7 @@ CREATE TABLE Availability
            REFERENCES Pharmacy (id)
 );
 
--- Информация о складе
+-- Информация о дистрибьюторе
 CREATE TABLE Storage
 (
    id             SERIAL PRIMARY KEY,
@@ -126,7 +126,7 @@ CREATE TABLE Storage
 -- Информация об автомобиле
 CREATE TABLE DeliveryAuto
 (
-   number      varchar(40)  UNIQUE PRIMARY KEY,
+   number      varchar(40)  PRIMARY KEY,
    maintenance Date CHECK (maintenance < CURRENT_DATE)
 );
 
@@ -146,7 +146,7 @@ CREATE TABLE Storage_Delivery
            REFERENCES Producer(id),
   -- ссылка на тип упаковки
     FOREIGN KEY (type_package_id)
-           REFERENCES Producer(id)
+           REFERENCES Type_Package(id)
 );
 
 -- Доставка со склада в аптеку
