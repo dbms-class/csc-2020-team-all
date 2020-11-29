@@ -26,17 +26,17 @@ class App(object):
             cur = db.cursor()
             query = """
                 UPDATE Availability
-                SET price={price}, remainder={remainder}
-                WHERE pharmacy_id={pharmacy_id} AND medicine_id={drug_id};
+                SET price=%(price)s, remainder=%(remainder)s
+                WHERE pharmacy_id=%(pharmacy_id)s AND medicine_id=%(drug_id)s;
                 INSERT INTO Availability(pharmacy_id, medicine_id, price, remainder)
-                SELECT {pharmacy_id}, {drug_id}, {price}, {remainder}
+                SELECT %(pharmacy_id)s, %(drug_id)s, %(price)s, %(remainder)s
                 WHERE NOT EXISTS (
                     SELECT 1
                     FROM Availability
-                    WHERE pharmacy_id={pharmacy_id} AND medicine_id={drug_id}
+                    WHERE pharmacy_id=%(pharmacy_id)s AND medicine_id=%(drug_id)s
                 )
-            """.format(drug_id=drug_id, pharmacy_id=pharmacy_id, remainder=remainder, price=price)
-            cur.execute(query)
+            """
+            cur.execute(query, {'drug_id': drug_id, 'pharmacy_id': pharmacy_id, 'remainder': remainder, 'price': price})
             return {"status": "OK"}
 
     @cherrypy.expose
