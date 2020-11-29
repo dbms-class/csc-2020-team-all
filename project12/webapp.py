@@ -22,8 +22,7 @@ class App(object):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def update_retail(self, drug_id, pharmacy_id, remainder, price):
-        db = self.connection_factory.getconn()
-        try:
+        with self.connection_factory.conn() as db:
             cur = db.cursor()
             query = """
                 UPDATE Availability
@@ -40,14 +39,11 @@ class App(object):
             cur.execute(query, {'drug_id': drug_id, 'pharmacy_id': pharmacy_id, 'remainder': remainder, 'price': price})
             db.commit()
             return {"status": "OK"}
-        finally:
-            self.connection_factory.putconn(db)
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def drugs(self):
-        db = self.connection_factory.getconn()
-        try:
+        with self.connection_factory.conn() as db:
             cur = db.cursor()
             query = """
                 SELECT M.id, M.trade_name, A.title as inn
@@ -60,14 +56,11 @@ class App(object):
             for m in medicines:
                 result.append({"id": m[0], "trade_name": m[1], "inn": m[2]})
             return result
-        finally:
-            self.connection_factory.putconn(db)
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def pharmacies(self):
-        db = self.connection_factory.getconn()
-        try:
+        with self.connection_factory.conn() as db:
             cur = db.cursor()
             query = """
                 SELECT id, title num, address
@@ -79,8 +72,6 @@ class App(object):
             for m in medicines:
                 result.append({"id": m[0], "num": m[1], "address": m[2]})
             return result
-        finally:
-            self.connection_factory.putconn(db)
 
 
 cherrypy.config.update({

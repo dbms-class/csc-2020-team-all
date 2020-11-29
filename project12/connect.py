@@ -31,14 +31,13 @@ class ConnectionFactory:
     def putconn(self, conn):
         return self.close_fxn(conn)
 
-    # @contextmanager
-    # def conn(self):
-    #     try:
-    #         result = self.open_fxn()
-    #         yield result
-    #     finally:
-    #         print("finally in context")
-    #         self.close_fxn(result)
+    @contextmanager
+    def conn(self):
+        try:
+            result = self.open_fxn()
+            yield result
+        finally:
+            self.close_fxn(result)
 
 
 def create_connection_factory(args):

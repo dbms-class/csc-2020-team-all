@@ -9,13 +9,11 @@ class Uploader(object):
     def run_sql_script(self, filename):
         sql_file = open(filename)
         sql_as_string = sql_file.read()
-        db = self.connection_factory.getconn()
-        try:
+
+        with self.connection_factory.conn() as db:
             cur = db.cursor()
             cur.execute(sql_as_string)
             db.commit()
-        finally:
-            self.connection_factory.putconn(db)
 
 
 if __name__ == '__main__':
