@@ -1,9 +1,12 @@
-## Веб сервер
+"""Server app
+"""
 import cherrypy
 
 from connect import create_connection_factory
 from connect import parse_cmd_line
 from static import index
+
+from peewee import *
 
 
 @cherrypy.expose
@@ -54,6 +57,40 @@ class App(object):
                 'price': price
             })
             db.commit()
+            return {0: 'OK', 'status': status}
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def update_retail_builder(self, drug_id, pharmacy_id, remainder, price):
+        with self.connection_factory.conn() as db:
+            availability = Table('availability').bind(db)
+            columns = availability.c
+            query = availability.select(
+                columns.pharmacy_id
+            ).where(
+                columns.pharmacy_id == pharmacy_id,
+                columns.medicine_id == drug_id
+            )
+
+            if query.exists():
+                status = 'updated'
+                query = availability.update(
+                    price=price,
+                    remainder=remainder,
+                ).where(
+                    columns.pharmacy_id == pharmacy_id,
+                    columns.medicine_id == drug_id
+                )
+            else:
+                status = 'inserted'
+                query = availability.insert(
+                    pharmacy_id=pharmacy_id,
+                    medicine_id=drug_id,
+                    price=price,
+                    remainder=remainder,
+                )
+
+            query.execute()
             return {0: 'OK', 'status': status}
 
     @cherrypy.expose
