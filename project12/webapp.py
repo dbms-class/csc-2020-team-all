@@ -25,17 +25,28 @@ class App(object):
         with self.connection_factory.conn() as db:
             cur = db.cursor()
             query = """
-                UPDATE Availability
-                SET price=%(price)s, remainder=%(remainder)s
+                SELECT pharmacy_id
+                FROM Availability
                 WHERE pharmacy_id=%(pharmacy_id)s AND medicine_id=%(drug_id)s;
-                INSERT INTO Availability(pharmacy_id, medicine_id, price, remainder)
-                SELECT %(pharmacy_id)s, %(drug_id)s, %(price)s, %(remainder)s
-                WHERE NOT EXISTS (
-                    SELECT 1
-                    FROM Availability
-                    WHERE pharmacy_id=%(pharmacy_id)s AND medicine_id=%(drug_id)s
-                )
             """
+            cur.execute(query, {
+                'drug_id': drug_id,
+                'pharmacy_id': pharmacy_id,
+            })
+
+            if cur.fetchone() is not None:
+                status = 'updated'
+                query = """
+                    UPDATE Availability
+                    SET price=%(price)s, remainder=%(remainder)s
+                    WHERE pharmacy_id=%(pharmacy_id)s AND medicine_id=%(drug_id)s;
+                """
+            else:
+                status = 'inserted'
+                query = """
+                    INSERT INTO Availability(pharmacy_id, medicine_id, price, remainder)
+                    VALUES (%(pharmacy_id)s, %(drug_id)s, %(price)s, %(remainder)s);
+                """
             cur.execute(query, {
                 'drug_id': drug_id,
                 'pharmacy_id': pharmacy_id,
@@ -43,7 +54,7 @@ class App(object):
                 'price': price
             })
             db.commit()
-            return {0: 'OK', 'status': 'updated'}
+            return {0: 'OK', 'status': status}
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
