@@ -5,7 +5,8 @@ import cherrypy
 
 from connect import connection_factory
 from connect import parse_cmd_line
-import model2 as model
+#import model2 as model
+import model3 as model
 from static import index
 
 
@@ -28,18 +29,29 @@ class App(object):
     @cherrypy.tools.json_out()
     def flights(self, flight_id=None, load_commander=True):
         def to_json(f):
-            base = {"id": f.id, "date": str(f.date)}
+            base = {"id": f.id(), "date": str(f.date())}
             if load_commander:
                base.update({"commander": f.commander()})
             return base
 
         return list(map(
             to_json,
-            self.all_flights(flight_id, False)
+            self.all_flights(flight_id, load_commander)
         ))
 
-    @cherrypy.expose
-    @cherrypy.tools.json_out()
+    # @cherrypy.expose
+    # @cherrypy.tools.json_out()
+    # def planets(self, planet_id=None):
+    #     return list(map(
+    #         lambda p: {
+    #             "id": p.id,
+    #             "name": p.name,
+    #             "distance": int(p.avg_distance),
+    #             "flight_count": p.flight_count
+    #         },
+    #         model.PlanetEntity.select()
+    #     ))
+
     def planets(self, planet_id=None):
         return list(map(
             lambda p: {
