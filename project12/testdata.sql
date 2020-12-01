@@ -10,38 +10,42 @@ INSERT INTO Type_Form(title) VALUES
 ('Порошок');
 
 INSERT INTO Laboratory(title, head_surname) VALUES
-('Lab1', 'Freeman');
+('Лаборатория в подвале', 'Хайзенберг');
 
 INSERT INTO CertificateInfo(number, end_date, laboratory_id) VALUES
-('vcx6728', '2020-12-10', 1);
+('vcx6728', '2022-12-10', 1),
+('vcx7467', '2023-12-10', 1);
 
 INSERT INTO Producer(title) VALUES
-('Honor'),
-('Liberty'),
-('DrugDiller');
+('Pfizer'),
+('Novartis'),
+('Sanofi');
 
 INSERT INTO ActiveSubstance(title, formula) VALUES
-('Cocaine', '1x-3ch'), ('Cofein', 'H20');
+('Water', 'H20'),
+('Sugar', 'C12H22O11');
 
 INSERT INTO Medicine(trade_name, international_trade_name, type_form_id, active_substance_id, producer_id, certificate_info, weight_mg) VALUES
-('Fuflomicin', 'Placebo', 1, 1, 1, 'vcx6728', 333),
-('Nurofen', 'Ibuprofen', 2, 2, 3, 'vcx6728', 333);
+('Фуфломицин', 'Anas Barbariae', 1, 1, 1, 'vcx6728', 100),
+('Нурофен', 'Ибупрофен', 2, 2, 2, 'vcx7467', 150);
 
 INSERT INTO Pharmacy(title, address) VALUES
-('Apteka #38', 'Petrovka 38'),
-('Apteka #7', 'Nevsky 7');
+('Аптека на Петровке №38', 'Петровка, 38'),
+('Аптека за углов №7', 'Красный угол, 7');
 
 INSERT INTO Availability(pharmacy_id, medicine_id, price, remainder) VALUES
-(1, 1, 30, 239);
+(1, 1, 30, 239),
+(1, 2, 50, 47),
+(2, 1, 33, 119);
 
 INSERT INTO Storage(address, full_name, bank_card, contact_number) VALUES
-('Nevsky 1', 'Shawerma', '7777-7777-7777-7777', '555-23-32');
+('Складская, 22', 'Закладка', '7777-7777-7777-7777', '555-23-32');
 
 INSERT INTO DeliveryAuto(number, maintenance) VALUES
 ('A777MP77', '2020-02-20');
 
 INSERT INTO Storage_Delivery(storage_id, delivery_date, type_package_id, producer_id, staff_name) VALUES
-(1, '2020-12-12', 1, 1, 'Plyushkin Sergey');
+(1, '2020-12-12', 1, 1, 'Плюшкин Сергей');
 
 INSERT INTO PharmacyDelivery(auto_number, storage_id, delivery_date, medicine_id, count_package, pharmacy_id) VALUES
 ('A777MP77', 1, '2020-11-28', 1, 23, 1);
