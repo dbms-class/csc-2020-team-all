@@ -36,9 +36,14 @@ class App(object):
                     WHERE pharmacy_id=%(pharmacy_id)s AND medicine_id=%(drug_id)s
                 )
             """
-            cur.execute(query, {'drug_id': drug_id, 'pharmacy_id': pharmacy_id, 'remainder': remainder, 'price': price})
+            cur.execute(query, {
+                'drug_id': drug_id,
+                'pharmacy_id': pharmacy_id,
+                'remainder': remainder,
+                'price': price
+            })
             db.commit()
-            return {"status": "OK"}
+            return {0: 'OK', 'status': 'updated'}
 
     @cherrypy.expose
     @cherrypy.tools.json_out()

@@ -14,15 +14,15 @@ DROP TABLE IF EXISTS Storage_Delivery CASCADE;
 DROP TABLE IF EXISTS PharmacyDelivery CASCADE;
 DROP TABLE IF EXISTS MedicineByDelivery CASCADE;
 
---CREATE TYPE Type_Package as ENUM ('Деревянный ящик', 'Пластиковая коробка');
---CREATE TYPE Type_Form as ENUM ('Таблетка', 'Капсула', 'Ампула', 'Порошок');
 
+-- Тип упаковки: 'Деревянный ящик', 'Пластиковая коробка'
 CREATE TABLE Type_Package
 (
    id           SERIAL PRIMARY KEY,
    title        varchar(40) UNIQUE NOT NULL
 );
 
+-- Тип формы выпуска: 'Таблетка', 'Капсула', 'Ампула', 'Порошок'
 CREATE TABLE Type_Form
 (
    id           SERIAL PRIMARY KEY,

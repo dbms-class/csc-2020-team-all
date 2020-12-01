@@ -7,8 +7,8 @@ class Uploader(object):
         self.connection_factory = create_connection_factory(args)
 
     def run_sql_script(self, filename):
-        sql_file = open(filename)
-        sql_as_string = sql_file.read()
+        with open(filename, 'r') as sql_file:
+            sql_as_string = sql_file.read()
 
         with self.connection_factory.conn() as db:
             cur = db.cursor()
