@@ -1,8 +1,10 @@
 -- INSERT INTO table(column1,column2,...)
 -- VALUES(value_1,value_2,...);
 -- Инициализация таблички
-INSERT INTO Pharmacy(Number, address) VALUES
-(1, 'Озерки'), (2, 'Змея'), (3, 'Аптека 24');
+INSERT INTO Pharmacy(PharmacyNumber, address) VALUES
+('Аптека за углом №7', '7-я линия, дом 18)'), 
+('Шипящая змея №69', 'улица змей, дом 69'),
+('Аптека 24 №24', 'бессонная улица, дом 24');
 
 INSERT INTO ActiveComponent(Name, Formula) VALUES
 ('component1', 'h2o'),
@@ -26,6 +28,11 @@ INSERT INTO Drug(Trade_name, International_name, Form, Maker_id, ActiveComponent
 ('trade1', 'internat1', 'капсула', 1, 'component1', 'certificate1'),
 ('trade2', 'internat2', 'таблетка', 2, 'component2', 'certificate2'),
 ('trade3', 'internat3', 'ампула', 3, 'component3', 'certificate3');
+
+INSERT INTO Prices(Pharmacy_id, Drug_id, Price, PacksLeft) VALUES
+(1, 1, 100, 100),
+(2, 1, 50, 200),
+(3, 1, 200, 1);
 
 
 -- https://csc-2020-team-all-2.dmitrybarashev.repl.co/update_retail?drug_id=1&pharmacy_id=1&remainder=10&price=100

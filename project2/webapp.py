@@ -27,8 +27,8 @@ class App(object):
     with self.connection_factory.conn() as db: 
       cur = db.cursor()
       cur.execute(
-        "SELECT PharmacyNumber FROM Prices "
-        "WHERE PharmacyNumber = %s AND Drug_id = %s",
+        "SELECT * FROM Prices "
+        "WHERE Pharmacy_id = %s AND Drug_id = %s",
         (pharmacy_id, drug_id)
       )
 
@@ -37,7 +37,7 @@ class App(object):
         cur.execute(
           "UPDATE Prices "
           "SET PacksLeft = %s, Price = %s "
-          "WHERE PharmacyNumber = %s AND Drug_id = %s",
+          "WHERE Pharmacy_id = %s AND Drug_id = %s",
           (remainder, price, pharmacy_id, drug_id)
         )
         key = 'update'
@@ -45,7 +45,7 @@ class App(object):
         # иначе вставляем
         cur.execute(
           "INSERT INTO Prices "
-          "(PharmacyNumber, Drug_id, Price, PacksLeft) "
+          "(Pharmacy_id, Drug_id, Price, PacksLeft) "
           "VALUES (%s, %s, %s, %s)",
           (pharmacy_id, drug_id, price, remainder)
         )
@@ -67,9 +67,9 @@ class App(object):
       # ВАЖНО: НАЗВАНИЕ ТАБЛИЦЫ И ЕЕ ПОЛЯ НУЖНО ПИСАТЬ МАЛЕНЬКИМИ БУКВАМИ
       prices_table = Table('prices').bind(db)
       q = prices_table.select(
-        prices_table.c.pharmacynumber
+        prices_table.c.id
         ).where(
-          prices_table.c.pharmacynumber == pharmacy_id,
+          prices_table.c.pharmacy_id == pharmacy_id,
           prices_table.c.drug_id == drug_id
           )
       
@@ -79,7 +79,7 @@ class App(object):
           packsleft = remainder,
           price = price
           ).where(
-            prices_table.c.pharmacynumber == pharmacy_id, 
+            prices_table.c.pharmacy_id == pharmacy_id, 
             prices_table.c.drug_id == drug_id
           ).execute()
         # а можно ли как то так?
@@ -91,7 +91,7 @@ class App(object):
       else:
         # иначе вставляем
         prices_table.insert(
-          pharmacynumber = pharmacy_id,
+          pharmacy_id = pharmacy_id,
           drug_id = drug_id,
           price = price, 
           packsleft = remainder
@@ -144,11 +144,11 @@ class App(object):
     #try:
     with self.connection_factory.conn() as db:
       cur = db.cursor()
-      cur.execute("SELECT Number, Address FROM Pharmacy")
+      cur.execute("SELECT * FROM Pharmacy")
       result = []
       pharmacies = cur.fetchall()
       for p in pharmacies:
-        result.append({"id": p[0], "num": p[0], "address": p[1]})
+        result.append({"id": p[0], "num": p[1], "address": p[2]})
       return result
     #finally:
     #  self.connection_factory.putconn(db)
@@ -160,13 +160,100 @@ class App(object):
     #try:
     with self.connection_factory.conn() as db:
       pharmacy_table = Table('pharmacy').bind(db)
+      # p = pharmacy_table.select() почему то не работает
       p = pharmacy_table.select(
-        pharmacy_table.c.number,
+        pharmacy_table.c.id,
+        pharmacy_table.c.pharmacynumber,
         pharmacy_table.c.address
-      )
+        )
       # Проблемы с кодировкой
       return list(p.execute())
-          
+    #finally:
+    #  self.connection_factory.putconn(db)
+
+  @cherrypy.expose
+  @cherrypy.tools.json_out()
+  def status_retail(self, drug_id = None, min_remainder = None, max_price = None):
+    with self.connection_factory.conn() as db:
+      prices_table = Table('prices').bind(db)
+      drug_table = Table('drug').bind(db)
+      pharmacy_table = Table('pharmacy').bind(db)
+
+      #можно сделать представление, но надо ли?
+      drugs_min_max_price = prices_table.select(
+        prices_table.c.drug_id,
+        fn.MIN(prices_table.c.price).alias('min_price'),
+        fn.MAX(prices_table.c.price).alias('max_price')
+      ).group_by(prices_table.c.drug_id)
+
+      #можно сделать представление
+      q = prices_table.select(
+        prices_table.c.drug_id,
+        drug_table.c.trade_name,
+        drug_table.c.international_name,
+        prices_table.c.pharmacy_id,
+        pharmacy_table.c.address,
+        prices_table.c.packsleft,
+        #какая то ошибка с Decimal
+        #prices_table.c.price,
+        #drugs_min_max_price.c.min_price,
+        #drugs_min_max_price.c.max_price
+      ).join(
+        drug_table, on=(prices_table.c.drug_id == drug_table.c.id)
+      ).join(
+        pharmacy_table, on=(prices_table.c.pharmacy_id == pharmacy_table.c.id)
+      ).join(
+        drugs_min_max_price, on=(prices_table.c.drug_id == drugs_min_max_price.c.drug_id)
+      )
+
+      if drug_id is not None:
+        q = q.where(prices_table.c.drug_id == drug_id)
+      
+      if min_remainder is not None:
+        q = q.where(prices_table.c.packsleft >= min_remainder)
+      
+      if max_price is not None:
+        q = q.where(prices_table.c.price <= max_price)
+
+      return list(q.execute())
+
+
+  @cherrypy.expose
+  @cherrypy.tools.json_out()
+  def status_retail_with_table_view(self, drug_id = None, min_remainder = None, max_price = None):
+    with self.connection_factory.conn() as db:
+      #prices_table = Table('prices').bind(db)
+      status_retail_table = Table('statusretail').bind(db)
+      
+      q = status_retail_table.select(
+        status_retail_table.c.drug_id,
+        status_retail_table.c.drug_trade_name,
+        status_retail_table.c.drug_inn,
+        status_retail_table.c.pharmacy_id,
+        status_retail_table.c.pharmacy_address,
+        status_retail_table.c.regitmainder,
+        #status_retail_table.c.price,
+        #status_retail_table.c.min_price,
+        #status_retail_table.c.max_price
+      )
+      # drugs_min_max_price.c.min_price,
+      # drugs_min_max_price.c.max_price
+      # ).join(
+      #   drugs_min_max_price, on=
+      #   (status_retail_table.c.drug_id == drugs_min_max_price.c.drug_id)
+      # )
+
+      if drug_id is not None:
+        q = q.where(status_retail_table.c.drug_id == drug_id)
+      
+      if min_remainder is not None:
+        q = q.where(status_retail_table.c.remainder >= min_remainder)
+      
+      if max_price is not None:
+        q = q.where(status_retail_table.c.price <= max_price)
+      
+      return list(q.execute())
+
 if __name__ == '__main__':
   cherrypy.config.update({
     'server.socket_host': '0.0.0.0',

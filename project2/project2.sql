@@ -36,7 +36,12 @@ LaboratoryName TEXT REFERENCES Laboratory (Name)
 -- других ключей не предусмотрено
  );
 
+--строка представляет собой объект Изготовитель
 CREATE TABLE Maker(id SERIAL PRIMARY KEY, name TEXT UNIQUE NOT NULL);
+
+--Множество лекарственных форм
+CREATE TYPE drug_form AS ENUM ('таблетка', 'капсула', 'ампула');
+
 -- строка представляет собой объект Лекарство с его свойствами
 CREATE TABLE Drug(
 Id SERIAL PRIMARY KEY,
@@ -44,7 +49,7 @@ Id SERIAL PRIMARY KEY,
 Trade_name TEXT UNIQUE NOT NULL,
 -- интернациональное имя уникально
 International_name TEXT NOT NULL,
-Form TEXT CHECK(Form IN ('таблетка', 'капсула', 'ампула')),
+Form drug_form,
 Maker_id INT REFERENCES Maker,
 -- N:1 каждое действующее вещество может соответствовать нескольким лекарствам
 ActiveComponentName TEXT REFERENCES ActiveComponent (Name),
@@ -71,8 +76,9 @@ Address TEXT
 
 -- строка представляет собой аптеку с номером и адресом
 CREATE TABLE Pharmacy(
-Number INT PRIMARY KEY,
-Address TEXT
+Id SERIAL PRIMARY KEY,
+PharmacyNumber TEXT NOT NULL,
+Address TEXT NOT NULL
 -- других ключей не предусмотрено
  );
 
@@ -104,15 +110,15 @@ PRIMARY KEY(SupplyNumber, Drug_id)
 
 
 
--- строка - информация о том, что в аптеке с номером PharmacyNumber есть PacksLeft штук лекарства Drug_id по цене Price 
+-- строка - информация о том, что в аптеке с номером Pharmacy_id есть PacksLeft штук лекарства Drug_id по цене Price 
 CREATE TABLE Prices(
 -- связь M:N. в каждой аптеке много лекарств. Каждое лекарство во многих аптеках
-PharmacyNumber INT REFERENCES Pharmacy(Number),
+Pharmacy_id INT REFERENCES Pharmacy(Id),
 Drug_id INT REFERENCES Drug(Id),
 Price NUMERIC CHECK (Price > 0),
 PacksLeft INT CHECK (PacksLeft >= 0),
 -- чтобы в одной аптеке не было нескольких записей о
-PRIMARY KEY(PharmacyNumber, Drug_id)
+PRIMARY KEY(Pharmacy_id, Drug_id)
 -- других ключей не предусмотрено
 );
 
@@ -134,11 +140,34 @@ AutoNumber TEXT REFERENCES Auto(Number)
 
 --строка это содержание задания относительно одного лекарства и конкретной аптееки
 CREATE TABLE Task_drug(
-PharmacyNumber INT REFERENCES Pharmacy(Number),
+Pharmacy_id INT REFERENCES Pharmacy(Id),
 Drug_id INT REFERENCES Drug(Id),
 PacksN INT CHECK (PacksN > 0),
 Task_id INT REFERENCES Task,
 -- чтобы фикировать сколько в этом задании пачек данного лекарства требуется аптеке
-PRIMARY KEY (Task_id, PharmacyNumber, Drug_id)
+PRIMARY KEY (Task_id, Pharmacy_id, Drug_id)
 -- других ключей не предусмотрено
 );
+
+CREATE OR REPLACE VIEW DrugsMinMaxPrice AS
+SELECT
+Drug_id as drug_id,
+MIN(Price) AS min_price,
+MAX(Price) AS max_price
+FROM Prices GROUP BY Drug_id;
+
+CREATE OR REPLACE VIEW StatusRetail AS
+SELECT
+P.Drug_id AS drug_id,
+D.Trade_name AS drug_trade_name,
+D.International_name AS drug_inn,
+P.Pharmacy_id AS pharmacy_id,
+Ph.Address AS pharmacy_address,
+P.PacksLeft AS remainder,
+P.Price AS price,
+MM.min_price,
+MM.max_price
+FROM
+Prices AS P JOIN Drug AS D ON (P.Drug_id = D.Id)
+JOIN Pharmacy AS Ph ON (P.Pharmacy_id = Ph.Id)
+JOIN DrugsMinMaxPrice AS MM ON (P.Drug_id = MM.drug_id);
