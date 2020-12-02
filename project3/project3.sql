@@ -3,7 +3,6 @@ CREATE DOMAIN URL AS TEXT CHECK (VALUE ~
                                  'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,255}\.[a-z]{2,9}\y([-a-zA-Z0-9@:%_\+.,~#?!&>//=]*)$');
 
 CREATE TYPE APARTMENT_PARAMETER AS ENUM ('Placement', 'Clean', 'Friendly');
-CREATE TYPE ENTERTAINMENT_GENRE AS ENUM ('пляж', 'фестиваль', 'спорт');
 CREATE TYPE SEX AS ENUM ('Мужской', 'Женский', 'Другое');
 
 CREATE TABLE CONVENIENCE
@@ -39,7 +38,7 @@ CREATE TABLE APARTMENT
     country_id     INT         NOT NULL REFERENCES COUNTRY (id),
     address        TEXT,
     latitude       NUMERIC CHECK ( ABS(latitude) <= 90 ),
-    longitude      NUMERIC CHECK ( ABS(latitude) <= 180 ),
+    longitude      NUMERIC CHECK ( ABS(longitude) <= 180 ),
     num_of_rooms   SMALLINT CHECK ( num_of_rooms >= 0 ),
     num_of_bed     SMALLINT CHECK ( num_of_bed >= 0 ),
     max_person     SMALLINT CHECK ( max_person >= 0 ),
@@ -57,9 +56,10 @@ CREATE TABLE CONVENIENCE_APARTMENT_TABLE
 CREATE TABLE PRICE
 (
     id           SERIAL PRIMARY KEY,
-    apartment_id INT UNIQUE NOT NULL REFERENCES APARTMENT (id),
+    apartment_id INT        NOT NULL REFERENCES APARTMENT (id),
     week         INT        NOT NULL CHECK ( week > 0 and week <= 53 ),
-    price        INT        NOT NULL CHECK ( price >= 0 )
+    price        INT        NOT NULL CHECK ( price >= 0 ),
+    UNIQUE (apartment_id, week)
 );
 
 CREATE TABLE APPLICATION
@@ -83,7 +83,7 @@ CREATE TABLE LANDLORD_REVIEW
     apartment_id       INT  NOT NULL REFERENCES APARTMENT (id),
     date               DATE NOT NULL,
     text               TEXT,
-    mark               INT  NOT NULL CHECK ( mark <@ int4range(1, 5))
+    mark               INT  NOT NULL CHECK ( mark BETWEEN 1 AND 5 )
 );
 
 CREATE OR REPLACE FUNCTION process_landlord_review() RETURNS TRIGGER AS
@@ -115,7 +115,7 @@ CREATE TABLE APARTMENT_MARK
     id                  SERIAL PRIMARY KEY,
     landlord_review     LANDLORD_REVIEW     NOT NULL,
     apartment_parameter APARTMENT_PARAMETER NOT NULL,
-    mark                INT                 NOT NULL CHECK ( mark <@ int4range(1, 5)),
+    mark                INT                 NOT NULL CHECK ( mark BETWEEN 1 AND 5 ),
     UNIQUE (landlord_review, apartment_parameter)
 );
 
@@ -126,7 +126,7 @@ CREATE TABLE RENTER_REVIEW
     apartment_id     INT  NOT NULL REFERENCES APARTMENT (id),
     date             DATE NOT NULL,
     text             TEXT,
-    mark             INT  NOT NULL CHECK ( mark <@ int4range(1, 5))
+    mark             INT  NOT NULL CHECK ( mark BETWEEN 1 AND 5 )
 );
 
 CREATE OR REPLACE FUNCTION process_renter_review() RETURNS TRIGGER AS
@@ -148,16 +148,21 @@ BEGIN
 END;
 $renter_review$ LANGUAGE plpgsql;
 
+CREATE TABLE ENTERTAINMENT_GENRE (
+  id   SERIAL PRIMARY KEY,
+  name TEXT NOT NULL
+);
+
 CREATE TABLE entertainment
 (
     id                  SERIAL PRIMARY KEY,
     name                TEXT UNIQUE         NOT NULL,
     country             INT                 NOT NULL REFERENCES COUNTRY (id),
     latitude            NUMERIC CHECK ( ABS(latitude) <= 90 ),
-    longitude           NUMERIC CHECK ( ABS(latitude) <= 180 ),
+    longitude           NUMERIC CHECK ( ABS(longitude) <= 180 ),
     period_start        DATE                NOT NULL, -- событие на неопределенный срок не может существовать
     period_end          DATE                NOT NULL,
-    entertainment_genre ENTERTAINMENT_GENRE NOT NULL
+    entertainment_genre_id INT NOT NULL REFERENCES ENTERTAINMENT_GENRE
 );
 
 CREATE OR REPLACE VIEW APARTMENT_PRICE_VIEW AS
