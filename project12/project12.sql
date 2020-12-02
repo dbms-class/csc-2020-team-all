@@ -184,3 +184,19 @@ CREATE TABLE MedicineByDelivery
    FOREIGN KEY (medicine_id)
            REFERENCES Medicine(id)
 );
+
+-- View для получения остатков лекарств по аптекам
+CREATE OR REPLACE VIEW MedicineStocks AS
+    SELECT A.medicine_id AS drug_id,
+           A.pharmacy_id,
+           A.remainder,
+           A.price,
+           M.trade_name AS drug_trade_name,
+           M.international_trade_name AS drug_inn,
+           P.address AS pharmacy_address
+    FROM Availability as A
+    JOIN Medicine as M
+    ON (A.medicine_id = M.id)
+    JOIN Pharmacy as P
+    ON (A.pharmacy_id = P.id)
+;
