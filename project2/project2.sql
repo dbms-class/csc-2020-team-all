@@ -146,10 +146,4 @@ Task_id INT REFERENCES Task,
 -- чтобы фикировать сколько в этом задании пачек данного лекарства требуется аптеке
 PRIMARY KEY (Task_id, PharmacyNumber, Drug_id)
 -- других ключей не предусмотрено
-<<<<<<< HEAD
 );
-=======
- );
-
-
->>>>>>> ac7974b91367ad2c4239a0dfc481bd036d05fee9
