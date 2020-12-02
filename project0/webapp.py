@@ -5,7 +5,6 @@ import cherrypy
 
 from connect import connection_factory
 from connect import parse_cmd_line
-#import model2 as model
 import model3 as model
 from static import index
 
@@ -31,7 +30,7 @@ class App(object):
         def to_json(f):
             base = {"id": f.id(), "date": str(f.date())}
             if load_commander:
-               base.update({"commander": f.commander()})
+                base.update({"commander": f.commander()})
             return base
 
         return list(map(
@@ -39,19 +38,8 @@ class App(object):
             self.all_flights(flight_id, load_commander)
         ))
 
-    # @cherrypy.expose
-    # @cherrypy.tools.json_out()
-    # def planets(self, planet_id=None):
-    #     return list(map(
-    #         lambda p: {
-    #             "id": p.id,
-    #             "name": p.name,
-    #             "distance": int(p.avg_distance),
-    #             "flight_count": p.flight_count
-    #         },
-    #         model.PlanetEntity.select()
-    #     ))
-
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
     def planets(self, planet_id=None):
         return list(map(
             lambda p: {
@@ -62,6 +50,19 @@ class App(object):
             },
             self.all_planets(planet_id=planet_id)
         ))
+
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def earliest_flight(self, planet_id):
+        planets = self.all_planets(planet_id=planet_id)
+        if len(planets) == 0:
+            raise cherrypy.HTTPError(404)
+
+        min_date = min([f.date() for f in planets[0].flights()])
+        return {
+            "date": str(min_date)
+        }
 
     @cherrypy.expose
     def set_distance(self, planet_id, distance, date):

@@ -47,28 +47,6 @@ def txn(work):
     finally:
         connection_factory.putconn(db)
 
-pg_db = PostgresqlDatabase('postgres', user='postgres', password='',
-                   host='127.0.0.1', port=5432)
-
-class PlanetEntity(Model):
-    id = AutoField()
-    name = CharField()
-    avg_distance = DecimalField()
-    flight_count = IntegerField()
-
-    class Meta:
-        database = pg_db
-        table_name = 'planetview'
-
-
-class CommanderEntity(Model):
-    id = AutoField()
-    name = CharField()
-
-
-class FlightEntity(Model):
-    commander = ForeignKeyField(CommanderEntity, backref="flights", column_name="commnader_id")
-
 
 class Planet:
     def __init__(self, id, name, avg_distance, flight_count):

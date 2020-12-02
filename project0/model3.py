@@ -1,24 +1,8 @@
 from connect import connection_factory
-import logging
-from psycopg2.extras import LoggingConnection
-
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 from peewee import *
 
-class LoggingDatabase(PostgresqlDatabase):
-    def __init__(self, database, register_unicode=True, encoding=None,
-             isolation_level=None, **kwargs):
-        super(LoggingDatabase, self).__init__(
-            'postgres', user='postgres', password='', host='127.0.0.1', port=5432,
-            connection_factory=LoggingConnection)
+db = connection_factory.create_db()
 
-    def _connect(self):
-        conn = super(LoggingDatabase, self)._connect()
-        conn.initialize(logger)
-        return conn
-
-pg_db = LoggingDatabase("postgres")
 
 class PlanetEntity(Model):
     id = AutoField()
@@ -27,7 +11,7 @@ class PlanetEntity(Model):
     flight_count = IntegerField()
 
     class Meta:
-        database = pg_db
+        database = db
         table_name = 'planetview'
 
 
@@ -36,7 +20,7 @@ class CommanderEntity(Model):
     name = CharField()
 
     class Meta:
-        database = pg_db
+        database = db
         table_name = 'commander'
 
 
@@ -47,7 +31,7 @@ class FlightEntity(Model):
     commander = ForeignKeyField(CommanderEntity, backref="flights", column_name="commander_id")
 
     class Meta:
-        database = pg_db
+        database = db
         table_name = 'flight'
 
 
@@ -58,6 +42,12 @@ def all_planets(planet_id=None):
     return [Planet(p) for p in q]
 
 
+# def all_flights(flight_id=None, load_commander=False):
+#     q = FlightEntity.select()
+#     if flight_id is not None:
+#         q = q.where(FlightEntity.id == flight_id)
+#     return [Flight(entity=f) for f in q]
+
 def all_flights(flight_id=None, load_commander=False):
     if load_commander:
         q = FlightEntity.select(FlightEntity.id, FlightEntity.date, CommanderEntity.name).join(CommanderEntity)
@@ -65,20 +55,18 @@ def all_flights(flight_id=None, load_commander=False):
         q = FlightEntity.select()
     if flight_id is not None:
         q = q.where(FlightEntity.id == flight_id)
-    return [Flight(f) for f in q]
+    return [Flight(entity=f) for f in q]
+
 
 def txn(work):
-    db = connection_factory.getconn()
-    try:
-        with pg_db.atomic() as txn:
-            return work(db)
-    finally:
-        connection_factory.putconn(db)
+    with db.atomic() as txn:
+        return work(db)
 
 
 class Planet:
     def __init__(self, entity):
         self.entity = entity
+        self.id = entity.id
 
     def get_name(self):
         return self.entity.name
@@ -86,22 +74,20 @@ class Planet:
     def get_distance(self):
         return self.entity.avg_distance
 
+    def get_flight_count(self):
+        return self.entity.flight_count
+
     def flights(self):
-        db = connection_factory.getconn()
-        try:
+        def work(db):
             cur = db.cursor()
             cur.execute(
                 "SELECT id FROM Flight WHERE planet_id=%s", (self.entity.id,)
             )
             result = []
             for f in cur.fetchall():
-                result.append(Flight(f[0]))
+                result.append(Flight(id=f[0]))
             return result
-        finally:
-            connection_factory.putconn(db)
-
-    def get_flight_count(self):
-        return self.flight_count
+        return txn(work)
 
     def set_distance(self, distance, flight_date):
         return txn(lambda db: self.set_distance_work(db, distance, flight_date))
@@ -118,17 +104,21 @@ class Planet:
 
 
 class Flight:
-    def __init__(self, flight_entity):
-        self.flight_entity = flight_entity
+    def __init__(self, entity=None, id=None):
+        self.entity = entity
+        self._id = id
+
+    def _entity(self):
+        return self.entity if self.entity is not None else FlightEntity.get_by_id(self._id)
 
     def id(self):
-        return self.flight_entity.id
+        return self._id if self._id is not None else self._entity().id
 
     def date(self):
-        return self.flight_entity.date
+        return self._entity().date
 
     def commander(self):
-        return self.flight_entity.commander.name
+        return self._entity().commander.name
 
     def spacecraft(self):
-        return self.flight_entity.spacecraft.name
+        return self._entity().spacecraft.name
