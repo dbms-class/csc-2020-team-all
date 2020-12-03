@@ -166,6 +166,63 @@ class App(object):
             result = list(query.execute())
             return result
 
+@cherrypy.expose
+@cherrypy.tools.json_out()
+def drug_move(self, drug_id, min_remainder, target_income_increase):
+  with self.connection_factory.conn() as db:
+    cur = db.cursor()
+
+    # достаем всех, у кого положительный излишек
+    query = f'''
+        SELECT remainder - min_remainder AS diff, pharmacy_id, price
+        FROM Availability 
+        WHERE remainder > min_remainder AND medicine_id = {drug_id}
+        ORDER BY price 
+    '''
+    cur.execute(query)
+    pos_info = cur.fetchall()
+
+    # достать всех, у кого отрицательный излишек
+    query = f'''
+        SELECT remainder - min_remainder AS diff, pharmacy_id, price
+        FROM Availability 
+        WHERE remainder < min_remainder AND medicine_id = {drug_id}
+        ORDER BY price DESC
+    '''
+    cur.execute(query)
+    neg_info = cur.fetchall()
+    
+    # перераспределить излишки + посчитать прибыль
+    # TODO: учитывать target_income_increase
+    income_increase = 0
+    pos_i = 0
+    neg_i = 0
+
+    while (pos_i < len(pos_info) and neg_i < len(neg_info)):
+        if (pos_info[pos_i][2] >= neg_info[neg_i][2]): 
+          break
+        price_inc = neg_info[neg_i][2] - pos_info[pos_i][2] 
+        diff = min(-neg_info[neg_i][0], pos_info[pos_i][0])
+        income_increase += diff * price_inc
+        pos_info[pos_i] = (pos_info[pos_i][0] - diff, pos_info[pos_i][1], pos_info[pos_i][2])
+        neg_info[neg_i] = (neg_info[neg_i][0] + diff, neg_info[neg_i][1], neg_info[neg_i][2])
+        if (pos_info[pos_i][0] == 0): 
+           pos_i += 1
+        if (neg_info[neg_i][0] == 0):
+           neg_i += 1
+            
+    # update
+    # всем аптекам, у кого info[i][0] == 0 - выставляем min_remainder
+    query = f'''
+      UPDATE Availability
+      SET remainder = {min_remainder}
+      WHERE
+    '''
+    # TODO: тут append к query нужных id-шников аптек
+
+    # TODO: + два апдейта на случай, если были частичные перекладывания (имеет смысл добавить на это флажки, чтобы не делать их просто так)
+
+
 
 cherrypy.config.update({
     'server.socket_host': '0.0.0.0',
