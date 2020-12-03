@@ -59,10 +59,14 @@ class App(object):
         if len(planets) == 0:
             raise cherrypy.HTTPError(404)
 
-        min_date = min([f.date() for f in planets[0].flights()])
-        return {
-            "date": str(min_date)
-        }
+        dates = [f.date() for f in planets[0].flights()]
+        if len(dates) == 0:
+            return {}
+        else:
+            min_date = min(dates)
+            return {
+                "date": str(min_date)
+            }
 
     @cherrypy.expose
     def set_distance(self, planet_id, distance, date):
