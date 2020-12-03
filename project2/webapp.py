@@ -253,6 +253,60 @@ class App(object):
         q = q.where(status_retail_table.c.price <= max_price)
       
       return list(q.execute())
+  
+  @cherrypy.expose
+  @cherrypy.tools.json_out()
+  def drug_move(self,drug_id,min_remainder,target_income):
+    with self.connection_factory.conn() as db:
+      prices_table = Table('prices').bind(db)
+      pharmacy_table = Table('pharmacy').bind(db)
+    
+      qmin = prices_table.select(
+        fn.MIN(prices_table.c.price)
+        ).where(
+          prices_table.c.drug_id == drug_id,
+          prices_table.c.packsleft >= min_remainder,
+          ).scalar()
+
+      
+      qminid = prices_table.select(
+        prices_table.c.pharmacy_id
+        ).where(
+          prices_table.c.drug_id == drug_id,
+          prices_table.c.packsleft >= min_remainder,
+          prices_table.c.price == qmin
+          ).execute()
+
+
+      qmax = prices_table.select(
+        fn.MAX(prices_table.c.price)
+        ).where(
+          prices_table.c.drug_id == drug_id,
+          prices_table.c.packsleft < min_remainder,
+          ).scalar()
+
+      
+      qmaxid = prices_table.select(
+        prices_table.c.pharmacy_id
+        ).where(
+          prices_table.c.drug_id == drug_id,
+          prices_table.c.packsleft >= min_remainder,
+          prices_table.c.price == qmax
+          ).execute()
+
+    
+      return {
+          "from_pharmacy_id": str(qminid), 
+          "to_pharmacy_id": str(qmaxid), 
+          "price_difference": float(qmax) - float(qmin), 
+          "count": 20} 
+    
+    #https://csc-2020-team-all-2.dmitrybarashev.repl.co/drug_move?drug_id=1&min_remainder=1&target_income=1
+      
+      
+      
+
+
 
 if __name__ == '__main__':
   cherrypy.config.update({
