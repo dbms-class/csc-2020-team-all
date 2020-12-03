@@ -21,6 +21,10 @@ def index():
         <select class="form-control" id="countrySelect">
         </select>
     </div>
+    <div class="form-group">
+        <label for="weekInput">Неделя</label>
+        <input type="number" id="weekInput" name="week"></input>
+    </div>
 </form>
 <script lang="js">
     function loadData() {
@@ -31,7 +35,7 @@ def index():
                    .appendTo(apartmentSelect);
            })
         });
-        const countrySelect = $('#commanderSelect');
+        const countrySelect = $('#countrySelect');
         $.getJSON('/countries', function (countries) {
             countries.forEach(function (value) {
                 $("<option>").text(value.name).attr("value", value.id)
