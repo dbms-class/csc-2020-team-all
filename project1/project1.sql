@@ -186,21 +186,29 @@ SELECT a.volunteer_id, t.id, t.datetime
 FROM volunteer_tasks t
          JOIN assignees a ON t.id = a.task_id
          JOIN volunteers v ON v.id = a.volunteer_id
-         JOIN (SELECT a.volunteer_id, MIN(t.datetime) AS t
+         JOIN (SELECT a.volunteer_id, MIN(t.datetime) AS min_t
                FROM volunteer_tasks t
                         JOIN assignees a ON t.id = a.task_id
                         JOIN volunteers v ON v.id = a.volunteer_id
                WHERE t.datetime > now()
-               GROUP BY a.volunteer_id) mt ON a.volunteer_id = mt.volunteer_id AND mt.t = t.datetime;
+               GROUP BY a.volunteer_id) mt ON a.volunteer_id = mt.volunteer_id AND mt.min_t = t.datetime;
 
 CREATE VIEW volunteer_load AS
-SELECT v.id,
-    v.name,
+SELECT v.id AS volunteer_id,
+    v.name AS volunteer_name,
     s.c AS sportsman_count,
     t.c AS total_task_count,
     nt.id AS next_task_id,
     nt.datetime AS next_task_time
 FROM volunteers v
-         JOIN (SELECT volunteer_id, COUNT(*) c FROM athletes GROUP BY volunteer_id) s ON v.id = s.volunteer_id
-         JOIN (SELECT volunteer_id, COUNT(*) c FROM assignees GROUP BY volunteer_id) t ON v.id = t.volunteer_id
-         JOIN Next_Task nt ON nt.volunteer_id = v.id 
+         LEFT JOIN (
+            SELECT v.id, COUNT(a.id) c FROM
+                volunteers v LEFT JOIN athletes a ON v.id = a.volunteer_id
+            GROUP BY v.id
+          )     s ON v.id = s.id
+         LEFT JOIN (
+            SELECT v.id, COUNT(a.task_id) c FROM 
+                volunteers v LEFT JOIN assignees a ON v.id = a.volunteer_id 
+            GROUP BY v.id
+          )     t ON v.id = t.id
+         LEFT JOIN Next_Task nt ON nt.volunteer_id = v.id;

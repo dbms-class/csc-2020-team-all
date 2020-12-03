@@ -69,6 +69,21 @@ class App(object):
             cherrypy.response.status = 201
 
 
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def volunteer_load(self, volunteer_id=None, sportsman_count=0, total_task_count=0):
+        with create_connection(self.args) as db:
+            cur = db.cursor()
+            command = 'SELECT * FROM volunteer_load WHERE sportsman_count >= %s AND total_task_count >= %s'
+            if volunteer_id is not None:
+                command += 'AND volunteer_id = %s'
+                cur.execute(command, (sportsman_count, total_task_count, volunteer_id))
+            else:
+                cur.execute(command, (sportsman_count, total_task_count))
+            result = cur.fetchall()
+            return [{"volunteer_id": v[0], "volunteer_name": v[1], "sportsman_count": v[2], "total_task_count": v[3], "next_task_id": v[4], "next_task_time": str(v[5])} for v in result]
+
+
 def run():
     cherrypy_cors.install()
     cherrypy.config.update({
