@@ -33,6 +33,7 @@ def parse_cmd_line():
     parser.add_argument('--pg-user', help='PostgreSQL user', default='wzkpgldt')
     parser.add_argument('--pg-password', help='PostgreSQL password', default='94bLQvMSgEWS3RhZD9kQuL9lqSplKlzM')
     parser.add_argument('--pg-database', help='PostgreSQL database', default='wzkpgldt')
+    parser.add_argument('--sqlite-file', help='Unusable', default=None)
     return parser.parse_args()
 
 

@@ -1,5 +1,5 @@
 from connect import connection_factory
-from peewee import Model
+from peewee import *
 
 
 db = connection_factory.create_db()
@@ -19,7 +19,7 @@ class AlbumEntity(Model):
 class TrackEntity(Model):
     id = AutoField()
     album = ForeignKeyField(AlbumEntity, backref='tracks', column_name='album_id')
-
+    
     class Meta:
         database = db
         table_name = 'track'
@@ -33,14 +33,20 @@ class MusicianEntity(Model):
 
 class MusicianTrackEntity(Model):
     musician = ForeignKeyField(MusicianEntity, backref='track', column_name='musician_id')
-	track = ForeignKeyField(Album, backref='musician', column_name='track_id')
-	role_id = IntegerField()
+    track = ForeignKeyField(TrackEntity, backref='musician', column_name='track_id')
+    role_id = IntegerField()
 
     class Meta:
         database = db
-        table_name = 'Musician_Track'
+        table_name = 'musician_track'
 
 def musician_tracks(musician_id):
-    return MusicianTrackEntity.select().where(
-        Musician_Track.musician.id == musician_id
+    return MusicianTrackEntity.select(
+        MusicianTrackEntity.musician,
+        MusicianTrackEntity.track,
+        MusicianTrackEntity.role_id
+    ).join(
+        MusicianEntity
+    ).where(
+        MusicianEntity.id == musician_id
     )
