@@ -46,3 +46,51 @@ def create_connection(args):
         return create_connection_pg(args)
 
 
+class ConnectionFactory:
+    def __init__(self, open_fxn, close_fxn, create_db_fxn):
+        self.create_db_fxn = create_db_fxn
+        self.open_fxn = open_fxn
+        self.close_fxn = close_fxn
+
+
+    def getconn(self):
+        return self.open_fxn()
+
+    def putconn(self, conn):
+        return self.close_fxn(conn)
+
+    def create_db(self):
+        return self.create_db_fxn()
+
+
+def create_connection_factory(args):
+    # Создаёт подключение к SQLite в соответствии с аргументами командной строки.
+    def open_sqlite():
+        return sqlite_driver.connect(args.sqlite_file)
+
+    def close_sqlite(conn):
+        pass
+
+    def create_db_sqlite():
+        return PooledSqliteDatabase(args.sqlite_file)
+
+    # Создаёт подключение в соответствии с аргументами командной строки.
+    # Если указан аргумент --sqlite-file то создается подключение к SQLite,
+    # в противном случае создаётся подключение к PostgreSQL
+    if args.sqlite_file is not None:
+        return ConnectionFactory(open_fxn=open_sqlite, close_fxn=close_sqlite, create_db_fxn=create_db_sqlite)
+    else:
+
+        def open_pg():
+            return connect(f"postgres+pool://{args.pg_user}:{args.pg_password}@{args.pg_host}:{args.pg_port}/{args.pg_database}")
+
+        def close_pg(conn):
+            conn.close()
+
+        def create_db_pg():
+            return LoggingDatabase(args)
+
+        return ConnectionFactory(open_fxn=open_pg, close_fxn=close_pg, create_db_fxn=create_db_pg)
+
+
+connection_factory = create_connection_factory(parse_cmd_line())

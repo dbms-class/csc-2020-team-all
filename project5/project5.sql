@@ -46,7 +46,8 @@ stop_id INT NOT NULL references transport_stop, --есть одна такая �
 platform_number INT NOT NULL check(platform_number >= 1),
 arrival_time TIME NOT NULL,
 is_working_day BOOLEAN NOT NULL,
-primary key (stop_id, platform_number, arrival_time, is_working_day) --Не может быть совпадений остановок разных маршрутов на одной платформе в одно и то же время в разные дни недели);
+primary key (stop_id, platform_number, arrival_time, is_working_day) --Не может быть совпадений остановок разных маршрутов на одной платформе в одно и то же время в разные дни недели
+);
 
 --У водителя с данным id такое-то ФИО
 CREATE TABLE driver(

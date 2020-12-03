@@ -1,2 +1,3 @@
-#pip install cherrypy psycopg2-binary cherrypy_cors
-python project5/webapp.py
+pip install cherrypy psycopg2-binary cherrypy_cors peewee
+cd project5
+python webapp.py

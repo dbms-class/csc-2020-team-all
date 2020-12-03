@@ -39,40 +39,6 @@ class RouteStop:
         self.arrival_time = arrival_time
         self.is_working_day = is_working_day
 
-# select что-хотим WHERE даненые
-def get_timetable(stop_id=None, route_id=None, is_working_day=True, with_extremes=None):
-    if stop_id is None:
-        return
-    db = connection_factory.getconn()
-    try:
-        routeStopView = Table('route_stop').bind(db)
-        stopView = Table('transport_stop').bind(db)
-        q = routeStopView.select(routeStopView.c.route_id, routeStopView.c.stop_id, routeStopView.c.platform_number, routeStopView.c.arrival_time, routeStopView.c.is_working_day)
-        q = q.join(stop_view).where(stopView.c.id == routeStopView.c.stop_id)
-        q = q.where(routeStopView.c.stop_id == stop_id)
-        if route_id is not None:
-            q = q.where(routeStopView.c.route_id == route_id)
-        q = q.where(routeStopView.c.is_working_day == is_working_day)
-        q = q.order_by(routeStopView.c.arrival_time.asc())
-        q = q.objects(RouteStop)
-        ans = [p for p in q]
-        ans = [{"stop_id": p.get_id, "stop_name": p.get_} for p in ans]
-        if with_extremes:
-            if route_id is not None:
-                qq = routeStopView.select(routeStopView.c.route_id, routeStopView.c.stop_id, routeStopView.c.platform_number, routeStopView.c.arrival_time, routeStopView.c.is_working_day)
-                qq = qq.where(routeStopView.c.stop_id == stop_id)
-                qq = qq.where(routeStopView.c.is_working_day == is_working_day)
-                qq = qq.order_by(routeStopView.c.arrival_time.asc())
-                qq = qq.objects(routeStopView)
-                all_ans = [p for p in qq]
-            else:
-                all_ans = copy(ans)
-        
-        
-        return ans
-    finally:
-        connection_factory.putconn(db)
-
 
 class Planet:
     def __init__(self, id, name, avg_distance, flight_count):
