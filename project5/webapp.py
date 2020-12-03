@@ -8,10 +8,24 @@ from connect import parse_cmd_line
 from connect import create_connection, connection_factory
 from static import index
 
-from model2 import db as sql_db, Stop, Route, RouteStop
+from model2 import db as sql_db, Stop, Route, RouteStop, Timetable
 from peewee import *
 from playhouse.shortcuts import model_to_dict
 
+
+def default(obj):
+       """Default JSON serializer."""
+       import calendar, datetime
+
+       if isinstance(obj, datetime.datetime):
+           if obj.utcoffset() is not None:
+               obj = obj - obj.utcoffset()
+           millis = int(
+               calendar.timegm(obj.timetuple()) * 1000 +
+               obj.microsecond / 1000
+           )
+           return millis
+       raise TypeError('Not sure how to serialize %s' % (obj,))
 
 @cherrypy.expose
 class App(object):
@@ -115,37 +129,24 @@ class App(object):
     # select что-хотим WHERE даненые
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def get_timetable(self, stop_id=None, route_id=None, is_working_day=True, with_extremes=None):
-        # if stop_id is None:
-            # return
-        #db = connection_factory.getconn()
+    def get_timetable(self, stop_id=None, route_id=None, is_working_day=True, with_extremes=False):
+        if stop_id is None:
+            return
+        # db = connection_factory.getconn()
         sql_db.connect()
         try:
-            q = RouteStop.select()
-            return json.dumps([model_to_dict(item) for item in q], default=json_util.default)
-            # routeStopView = Table('transport_condition').bind(db)
-            # stopView = Table('transport_stop').bind(db)
-            # q = routeStopView.select()
-            # q = routeStopView.select(routeStopView.c.route_id)#, routeStopView.c.stop_id, routeStopView.c.platform_number, routeStopView.c.arrival_time, routeStopView.c.is_working_day)
-            # q = q.join(stopView).where(stopView.c.id == routeStopView.c.stop_id)
-            #if stop_id is not None:
-            #  q = q.where(routeStopView.c.stop_id == stop_id)
-            #if route_id is not None:
-            #    q = q.where(routeStopView.c.route_id == route_id)
-            #q = q.where(routeStopView.c.is_working_day == is_working_day)
-            #q = q.order_by(routeStopView.c.arrival_time.asc())
-            # ans = [p for p in q]
-            # if with_extremes:
-            #     if route_id is not None:
-            #         qq = routeStopView.select(routeStopView.c.route_id, routeStopView.c.stop_id, routeStopView.c.platform_number, routeStopView.c.arrival_time, routeStopView.c.is_working_day)
-            #         qq = qq.where(routeStopView.c.stop_id == stop_id)
-            #         qq = qq.where(routeStopView.c.is_working_day == is_working_day)
-            #         qq = qq.order_by(routeStopView.c.arrival_time.asc())
-            #         qq = qq.objects(routeStopView)
-            #         all_ans = [p for p in qq]
-            #     else:
-            #         all_ans = copy(ans)
-            # return ans
+            q = Timetable.select();
+            is_working_day = bool(int(is_working_day))
+            q = q.where(Timetable.is_working_day != (not is_working_day))
+            q = q.where(Timetable.stop_id == stop_id)
+            if route_id is not None:
+                q = q.where(Timetable.route_id == route_id)
+            ans = [item for item in q]
+            if with_extremes:
+                ans = [{'stop_id': item.stop_id, 'stop_name': item.stop_name, 'route_num': item.route_num, 'route_first_arrival': str(item.route_first_arrival), 'route_last_arrival': str(item.route_last_arrival), 'all_first_arrival': str(item.all_first_arrival), 'all_last_arrival': str(item.all_last_arrival)} for item in q]
+            else:
+                ans = [{'stop_id': item.stop_id, 'stop_name': item.stop_name, 'route_num': item.route_num, 'route_first_arrival': str(item.route_first_arrival), 'route_last_arrival': str(item.route_last_arrival)} for item in q]
+            return ans
         finally:
             # connection_factory.putconn(db)
             sql_db.close()

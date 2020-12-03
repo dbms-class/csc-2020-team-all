@@ -40,10 +40,25 @@ class Route(BaseModel):
 class RouteStop(BaseModel):
   route = ForeignKeyField(Route, backref="route_stop", null=False)
   stop = ForeignKeyField(Stop, backref="route_stop", null=False)
-  platform_number = IntegerField(null = False)
-  arrival_time = TimeField(null = False)
-  is_working_day = BooleanField(null = False)
+  platform_number = IntegerField(null=False)
+  arrival_time = TimeField(null=False)
+  is_working_day = BooleanField(null=False)
 
   class Meta:
     table_name = 'route_stop'
+    primary_key = False
+
+class Timetable(BaseModel):
+  stop_id = IntegerField()
+  stop_name = TextField()
+  route_id = IntegerField()
+  route_num = IntegerField()
+  route_first_arrival = TimeField()
+  route_last_arrival = TimeField()
+  all_first_arrival = TimeField()
+  all_last_arrival = TimeField()
+  is_working_day = BooleanField()
+
+  class Meta:
+    table_name = 'timetable'
     primary_key = False

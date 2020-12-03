@@ -81,3 +81,44 @@ CREATE TABLE validation_result(
 work_order_id INT references work_order, --описание наряда единственно для результата валидации 1:N
 ticket_type_id INT UNIQUE references ticket_type, --билет уникален для типа валидации 1:N
 number_of_validations INT NOT NULL CHECK(number_of_validations > 0));
+
+CREATE VIEW all_first_last_arrival AS
+    SELECT
+        stop_id,
+        is_working_day,
+        MIN(arrival_time) AS all_first_arrival,
+        MAX(arrival_time) AS all_last_arrival
+    FROM
+        route_stop
+    GROUP BY
+        stop_id, is_working_day;
+
+CREATE VIEW timetable AS
+    SELECT
+        RS.stop_id AS stop_id,
+        S.address AS stop_name,
+        MIN(arrival_time) AS route_first_arrival,
+        MAX(arrival_time) AS route_last_arrival,
+        A.all_first_arrival AS all_first_arrival,
+        A.all_last_arrival AS all_last_arrival,
+        RS.is_working_day,
+        RS.route_id,
+        R.route AS route_num
+    FROM
+        route_stop RS
+            JOIN
+                transport_stop S
+                    ON
+                        RS.stop_id = S.id
+            JOIN
+                all_first_last_arrival A
+                    ON
+                        RS.stop_id = A.stop_id
+                            AND
+                        RS.is_working_day = A.is_working_day
+            JOIN
+                transport_route R
+                    ON
+                        RS.route_id = R.id
+    GROUP BY
+        RS.stop_id, S.address, A.all_first_arrival, A.all_last_arrival, RS.route_id, R.route;
