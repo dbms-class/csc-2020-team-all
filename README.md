@@ -1,3 +1,7 @@
+03/12/20 Селиванов,Волкова
+Цель: Дописать эндпоинт Volunter_load и начать 5 эндпоинт
+Итог: Дописан Volunter_load. Начато написание view для volunteer_unassign.
+
 26/11/20 Дегтерев,Селиванов
 Цель: Дописать Register и новый эндпоинт Volunter_load
 Итог: Дописан Register, написан view для Volunter_load и добавлен эндпоинт Volunter_load 
