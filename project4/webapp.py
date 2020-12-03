@@ -8,6 +8,8 @@ import cherrypy_cors
 from connect import parse_cmd_line
 from connect import create_connection
 
+from models import *
+
 @cherrypy.expose
 class App(object):
     def __init__(self, args):
@@ -144,6 +146,12 @@ class App(object):
                 cur.execute(query)
 
             return list(map(to_json, cur.fetchall()))
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def musician_unassign(self, musician_id, track_ids, blocked_tracks_album_id):
+        all_tracks = musician_tracks(musician_id)
+
 
 cherrypy.config.update({
   'server.socket_host': '0.0.0.0',
