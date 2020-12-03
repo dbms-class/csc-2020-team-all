@@ -1,121 +1,165 @@
-
 # encoding: UTF-8
 
 import cherrypy
-import cherrypy_cors
-
 from connect import parse_cmd_line
-from connect import create_connection
+from connect import create_connection_factory
+
+from peewee import *
+
+import json
+from decimal import Decimal
+
+class _JSONEncoder(json.JSONEncoder):
+  def default(self, obj):
+    if isinstance(obj, Decimal):
+      return float(obj)
+    return super().default(obj)
+  def iterencode(self, value):
+    # Adapted from cherrypy/_cpcompat.py
+    for chunk in super().iterencode(value):
+      yield chunk.encode("utf-8")
+
+json_encoder = _JSONEncoder()
+
+def json_handler(*args, **kwargs):
+  # Adapted from cherrypy/lib/jsontools.py
+  value = cherrypy.serving.request._json_inner_handler(*args, **kwargs)
+  return json_encoder.iterencode(value)
 
 @cherrypy.expose
 class App(object):
     def __init__(self, args):
-        self.args = args
+      self.connection_factory = create_connection_factory(args)
 
     @cherrypy.expose
     def index(self):
       return "Hello web app"
 
-
-    @cherrypy.expose
-    @cherrypy.tools.json_out()
-    def update_retail(self, drug_id, pharmacy_id, remainder, price):
-      with create_connection(self.args) as db:
-          cur = db.cursor()
-          cur.execute("insert into drugstore_price_list(drugstore_id, drug_id, price,items_count) values (%s, %s, %s, %s) on conflict (drugstore_id, drug_id) do update set items_count = %s", (pharmacy_id, drug_id, price, remainder, remainder))
-            
-
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def drugs(self):
-      with create_connection(self.args) as db:
-          cur = db.cursor()
-          cur.execute("select id, trademark, international_name from drug")
-          result = []
-          drugs = cur.fetchall()
-          for d in drugs:
-              result.append({"id": d[0], "trademark": d[1], "international_name": d[2]})
-          return result
+      with self.connection_factory.conn() as db:
+        cur = db.cursor()
+        cur.execute("select id, trademark, international_name from drug")
+        result = []
+        drugs = cur.fetchall()
+        for d in drugs:
+            result.append({"id": d[0], "trademark": d[1], "international_name": d[2]})
+        return result
+    
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def drugs_peewe(self):
+      with self.connection_factory.conn() as db:
+        drug_table = Table('drug').bind(db)
+        d = drug_table.select(
+          drug_table.c.id,
+          drug_table.c.trademark,
+          drug_table.c.international_name
+        )
+        return list(d.execute())
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def pharmacies(self):
-      with create_connection(self.args) as db:
-          cur = db.cursor()
-          cur.execute("select id, name, address from drugstore")
-          result = []
-          drugstores = cur.fetchall()
-          for d in drugstores:
-              result.append({
-                "id": d[0],
-                "name": d[1],
-                "address": d[2]
-              })
-          return result
-
+      with self.connection_factory.conn() as db:
+        cur = db.cursor()
+        cur.execute("select id, name, address from drugstore")
+        result = []
+        drugstores = cur.fetchall()
+        for d in drugstores:
+            result.append({
+              "id": d[0],
+              "name": d[1],
+              "address": d[2]
+            })
+        return result
+    
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def status_retail(self, drug_id=None, min_remainder=None, max_price=None):
-        with create_connection(self.args) as db:
-          cur = db.cursor()
-          sql_querry = """
-            select * from (select 
-            L.drug_id as drug_id,
-            D.trademark as drug_trade_name,
-            D.international_name as drug_inn,
-            L.drugstore_id as pharmacy_id,
-            DS.address as pharmacy_address,
-            L.items_count as remainder,
-            L.price as price
-            from drugstore_price_list L 
-            left join drugstore DS on drugstore_id = id
-            left join drug D on drug_id = D.id) U
-            left join (select
-            drug_id,
-            MIN(price) as min_price,
-            MAX(price) as max_price
-            from drugstore_price_list L
-            group by drug_id) V on U.drug_id = V.drug_id"""
+    def pharmacies_peewe(self):
+      with self.connection_factory.conn() as db:
+        pharmacy_table = Table('drugstore').bind(db)
+        p = pharmacy_table.select(
+          pharmacy_table.c.id,
+          pharmacy_table.c.name,
+          pharmacy_table.c.address
+        )
+        return list(p.execute())
 
-          query_filters = []
-          if (drug_id):
-            query_filters.append("drug_id")
-          if (min_remainder):
-            query_filters.append("min_remainder")
-          if (max_price):
-            query_filters.append("max_price")
+    @cherrypy.expose
+    @cherrypy.tools.json_out(handler=json_handler)
+    def status_retail(self, drug_id = None, min_remainder = None, max_price = None):
+      with self.connection_factory.conn() as db:
+        prices_table = Table('drugstore_price_list').bind(db)
+        pharmacy_table = Table('drugstore').bind(db)
+        drug_table = Table('drug').bind(db)
 
-          if query_filters:
-            sql_querry += "\n where U.%s ".format(qf)
-          for ind, qf in enumerate(query_filters):
-            sql_querry += qf
-            if qf == "drug_id":
-              sql_querry += "=".format(drug_id)
-            elif qf == "remainder":
-              sql_querry += ">= ".format(remainder)
-            elif qf == "price":
-              sql_querry += "<= ".format(price)
-            if ind != len(query_filters):
-              sql_querry += " and "
+        #можно сделать представление, но надо ли?
+        drugs_min_max_price = prices_table.select(
+          prices_table.c.drug_id,
+          fn.MIN(prices_table.c.price).alias('min_price'),
+          fn.MAX(prices_table.c.price).alias('max_price')
+        ).group_by(prices_table.c.drug_id)
 
-          cur.execute(sql_querry)
-          result = []
-          drugstores = cur.fetchall()
-          for d in drugstores:
-            result.append({
-              "drug_id": d[0],
-              "drug_trade_name": d[1],
-              "drug_inn": d[2],
-              "pharmacy_id": d[3],
-              "pharmacy_address": d[4],
-              "remainder": d[5],
-              "price": float(d[6]),
-              "min_price": float(d[8]),
-              "max_price": float(d[9])
-            })
+        #можно сделать представление
+        q = prices_table.select(
+          prices_table.c.drug_id,
+          drug_table.c.trademark,
+          drug_table.c.international_name,
+          prices_table.c.drugstore_id,
+          pharmacy_table.c.address,
+          prices_table.c.items_count#,
+          # prices_table.c.price,
+          # drugs_min_max_price.c.min_price,
+          # drugs_min_max_price.c.max_price
+        ).join(
+          drug_table, on=(prices_table.c.drug_id == drug_table.c.id)
+        ).join(
+          pharmacy_table, on=(prices_table.c.drugstore_id == pharmacy_table.c.id)
+        ).join(
+          drugs_min_max_price, on=(prices_table.c.drug_id == drugs_min_max_price.c.drug_id)
+        )
 
-          print(result)
-          return result
+        if drug_id is not None:
+          q = q.where(prices_table.c.drug_id == drug_id)
+        
+        if min_remainder is not None:
+          q = q.where(prices_table.c.items_count >= min_remainder)
+        
+        if max_price is not None:
+          q = q.where(prices_table.c.price <= max_price)
+
+        return list(q.execute())
+  
+    @cherrypy.expose
+    @cherrypy.tools.json_out(handler=json_handler)
+    def status_retail_with_table_view(self, drug_id = None, min_remainder = None, max_price = None):
+      with self.connection_factory.conn() as db:
+        status_retail_table = Table('status_retail').bind(db)
+        
+        q = status_retail_table.select(
+          status_retail_table.c.drug_id,
+          status_retail_table.c.drug_trade_name,
+          status_retail_table.c.drug_inn,
+          status_retail_table.c.pharmacy_id,
+          status_retail_table.c.pharmacy_address,
+          status_retail_table.c.remainder,
+          status_retail_table.c.price,
+          status_retail_table.c.min_price,
+          status_retail_table.c.max_price
+        )
+
+        if drug_id is not None:
+          q = q.where(status_retail_table.c.drug_id == drug_id)
+        
+        if min_remainder is not None:
+          q = q.where(status_retail_table.c.remainder >= min_remainder)
+        
+        if max_price is not None:
+          q = q.where(status_retail_table.c.price <= max_price)
+        
+        return list(q.execute())
 
 cherrypy.config.update({
   'server.socket_host': '0.0.0.0',

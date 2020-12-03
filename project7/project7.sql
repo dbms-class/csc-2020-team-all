@@ -1,3 +1,21 @@
+drop table warehouse_delivery_drugs;
+drop table warehouse_delivery;
+drop table drugstore_delivery_drugs;
+drop table drugstore_delivery;
+drop table transport_vehicle;
+drop table drugstore_price_list;
+drop table drugstore;
+drop table warehouse;
+drop table distributor;
+drop table manufacturer;
+drop table drug_manufacturer;
+drop table drug;
+drop table shipping_package;
+drop table drug_form;
+drop table certificate;
+drop table lab;
+drop table substance;
+
 -- Действующее вещество с названием "name" и формулой "formula"
 create table substance
 (
@@ -50,10 +68,10 @@ create table drug
     international_name   text not null,
     drug_form_id         int  not null references drug_form (id),
     substance_name       text not null references substance (name),
-    certificate_id       int  not null unique references certificate (id),
-    release_package_type text not null,
+    certificate_id       int  not null unique references certificate (id)
+    --release_package_type text not null, как понял теперь не нужно
     -- перевозочные упаковки одного и того же лекарства неотличимы друг от друга
-    shipping_package_id  int unique references shipping_package (id)
+    --shipping_package_id  int unique references shipping_package (id)
 );
 
 -- Лекарство с номером "drug_id" производится производителем с номером "manufacturer_id"
@@ -126,7 +144,6 @@ create table drugstore_delivery
     transport_vehicle_number text not null references transport_vehicle (registration_number),
     delivery_date            date not null,
     warehouse_id             int references warehouse (id)
-<<<<<<< HEAD
 );
 
 -- В поставке с номером "delivery_id" в аптеку с номером "drugstore_id" поставляется "package_count" отпускных упаковок лекарства с номером "drug_id"
@@ -140,21 +157,6 @@ create table drugstore_delivery_drugs
     primary key (delivery_id, drugstore_id, drug_id)
 );
 
-=======
-);
-
--- В поставке с номером "delivery_id" в аптеку с номером "drugstore_id" поставляется "package_count" отпускных упаковок лекарства с номером "drug_id"
--- Связь между drugstore_delivery_drugs и drugstore_delivery - N:1, между drugstore_delivery_drugs и drugstore - N:1, между drugstore_delivery_drugs и drug - N:1
-create table drugstore_delivery_drugs
-(
-    delivery_id   int references drugstore_delivery (id),
-    drugstore_id  int references drugstore (id),
-    drug_id       int references drug (id),
-    package_count int not null check (package_count > 0),
-    primary key (delivery_id, drugstore_id, drug_id)
-);
-
->>>>>>> origin/project7
 -- Поставка с номером "id" от дистрибьютора с номером "distributor_id" осуществляется на склад с номером "warehouse_id", имеет время прибытия "arrival_time" и ответственного кладовщика с фамилией "storekeepers_last_name"
 -- Связь между warehouse_delivery и distributor N:1, между warehouse_delivery и warehouse 1:N
 create table warehouse_delivery
@@ -174,28 +176,27 @@ create table warehouse_delivery_drugs
     drug_id       int not null references drug (id),
     package_count int not null check (package_count > 0),
     primary key (delivery_id, drug_id)
-<<<<<<< HEAD
 );
 
--- Поставка с номером "id" от дистрибьютора с номером "distributor_id" осуществляется на склад с номером "warehouse_id", имеет время прибытия "arrival_time" и ответственного кладовщика с фамилией "storekeepers_last_name"
--- Связь между warehouse_delivery и distributor N:1, между warehouse_delivery и warehouse 1:N
-create table warehouse_delivery
-(
-    id                     serial primary key,
-    distributor_id         int  not null references distributor (id),
-    warehouse_id           int  not null references warehouse (id),
-    arrival_time           time not null,
-    storekeepers_last_name text not null
-=======
->>>>>>> origin/project7
-);
+CREATE OR REPLACE VIEW drugs_min_max_price AS
+SELECT
+drug_id,
+MIN(price) AS min_price,
+MAX(price) AS max_price
+FROM drugstore_price_list GROUP BY drug_id;
 
--- В поставке с номером "delivery_id" на склад доставляется "package_count" перевозочных упаковок лекарства с номером "drug_id"
--- Реализует связь M:N между warehouse_delivery и drug
-create table warehouse_delivery_drugs
-(
-    delivery_id   int not null references warehouse_delivery (id),
-    drug_id       int not null references drug (id),
-    package_count int not null check (package_count > 0),
-    primary key (delivery_id, drug_id)
-);
+CREATE OR REPLACE VIEW status_retail AS
+SELECT
+p.drug_id AS drug_id,
+d.trademark AS drug_trade_name,
+d.international_name AS drug_inn,
+p.drugstore_id AS pharmacy_id,
+ds.address AS pharmacy_address,
+p.items_count AS remainder,
+p.price AS price,
+mm.min_price AS min_price,
+mm.max_price AS max_price
+FROM
+drugstore_price_list AS p JOIN drug AS d ON (p.drug_id = d.id)
+JOIN drugstore AS ds ON (p.drugstore_id = ds.Id)
+JOIN drugs_min_max_price AS mm ON (p.drug_id = mm.drug_id);
