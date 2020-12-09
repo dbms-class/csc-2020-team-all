@@ -147,14 +147,14 @@ PRIMARY KEY (Task_id, Pharmacy_id, Drug_id)
 -- других ключей не предусмотрено
 );
 
-CREATE OR REPLACE VIEW DrugsMinMaxPrice AS
+CREATE OR REPLACE VIEW drugs_min_max_price AS
 SELECT
 Drug_id as drug_id,
 MIN(Price) AS min_price,
 MAX(Price) AS max_price
 FROM Prices GROUP BY Drug_id;
 
-CREATE OR REPLACE VIEW StatusRetail AS
+CREATE OR REPLACE VIEW status_retail AS
 SELECT
 P.Drug_id AS drug_id,
 D.Trade_name AS drug_trade_name,
@@ -168,4 +168,4 @@ MM.max_price
 FROM
 Prices AS P JOIN Drug AS D ON (P.Drug_id = D.Id)
 JOIN Pharmacy AS Ph ON (P.Pharmacy_id = Ph.Id)
-JOIN DrugsMinMaxPrice AS MM ON (P.Drug_id = MM.drug_id);
+JOIN drugs_min_max_price AS MM ON (P.Drug_id = MM.drug_id);

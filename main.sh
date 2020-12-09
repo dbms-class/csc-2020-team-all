@@ -1,6 +1,6 @@
 #!bin/sh
-pip install cherrypy psycopg2-binary
-pip install peewee
+#pip install cherrypy psycopg2-binary
+#pip install peewee
 
 PG_HOST=hattie.db.elephantsql.com
 PG_PORT=5432

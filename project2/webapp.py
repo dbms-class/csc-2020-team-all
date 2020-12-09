@@ -51,7 +51,6 @@ class App(object):
         )
         key = 'insert'     
 
-
       #обязательный
       db.commit()
       return {key : 'ok'}
@@ -223,7 +222,7 @@ class App(object):
   def status_retail_with_table_view(self, drug_id = None, min_remainder = None, max_price = None):
     with self.connection_factory.conn() as db:
       #prices_table = Table('prices').bind(db)
-      status_retail_table = Table('statusretail').bind(db)
+      status_retail_table = Table('status_retail').bind(db)
       
       q = status_retail_table.select(
         status_retail_table.c.drug_id,
