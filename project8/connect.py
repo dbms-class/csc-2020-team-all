@@ -1,29 +1,21 @@
-# encoding: UTF-8
-
+#
 import argparse
 
-# Драйвер PostgreSQL
-# Находится в модуле psycopg2-binary, который можно установить командой
-# pip install psycopg2-binary или её аналогом.
-import psycopg2 as pg_driver
-from psycopg2 import pool
-
 # Драйвер SQLite3
-# Находится в модуле sqlite3, который можно установить командой
-# pip install sqlite3 или её аналогом.
 import sqlite3 as sqlite_driver
 
 from contextlib import contextmanager
 from playhouse.db_url import connect
+
+
 # Разбирает аргументы командной строки.
-# Выплевывает структуру с полями, соответствующими каждому аргументу.
 def parse_cmd_line():
-    parser = argparse.ArgumentParser(description='Эта программа вычисляет 2+2 при помощи реляционной СУБД')
+    parser = argparse.ArgumentParser(description='Эта программа учёта бронирований')
     parser.add_argument('--pg-host', help='PostgreSQL host name', default='localhost')
     parser.add_argument('--pg-port', help='PostgreSQL port', default=5432)
-    parser.add_argument('--pg-user', help='PostgreSQL user', default='postgres')
+    parser.add_argument('--pg-user', help='PostgreSQL user', default='')
     parser.add_argument('--pg-password', help='PostgreSQL password', default='')
-    parser.add_argument('--pg-database', help='PostgreSQL database', default='postgres')
+    parser.add_argument('--pg-database', help='PostgreSQL database', default='')
     parser.add_argument('--sqlite-file', help='SQLite3 database file. Type :memory: to use in-memory SQLite3 database',
                         default=None)
     return parser.parse_args()
@@ -40,6 +32,14 @@ class ConnectionFactory:
     def putconn(self, conn):
         return self.close_fxn(conn)
 
+    @contextmanager
+    def conn(self):
+        try:
+            result = self.open_fxn()
+            yield result
+        finally:
+            self.close_fxn(result)
+
     # @contextmanager
     # def conn(self):
     #     try:
@@ -48,7 +48,6 @@ class ConnectionFactory:
     #     finally:
     #         print("finally in context")
     #         self.close_fxn(result)
-
 
 def create_connection_factory(args):
     # Создаёт подключение к SQLite в соответствии с аргументами командной строки.
@@ -72,6 +71,3 @@ def create_connection_factory(args):
             conn.close()
 
         return ConnectionFactory(open_fxn=open_pg, close_fxn=close_pg)
-
-
-connection_factory = create_connection_factory(parse_cmd_line())
