@@ -61,6 +61,8 @@ class ConnectionFactory:
         return self.close_fxn(conn)
 
 
+from playhouse.db_url import connect
+
 def create_connection_factory(args):
     # Создаёт подключение к SQLite в соответствии с аргументами командной строки.
     def open_sqlite():
@@ -75,18 +77,11 @@ def create_connection_factory(args):
     if args.sqlite_file is not None:
         return ConnectionFactory(open_fxn=open_sqlite, close_fxn=close_sqlite)
     else:
-        # Создаёт подключение к постгресу в соответствии с аргументами командной строки.
-        pg_pool = pool.SimpleConnectionPool(1, 5,
-                                  user=args.pg_user, password=args.pg_password, host=args.pg_host, port=args.pg_port)
-        count = 0
         def open_pg():
-            nonlocal count
-            count += 1
-            print(f"We issued {count} queries")
-            return pg_pool.getconn()
+            return connect(f"postgres+pool://{args.pg_user}:{args.pg_password}@{args.pg_host}:{args.pg_port}/{args.pg_database}")
 
         def close_pg(conn):
-            pg_pool.putconn(conn)
+            conn.close()
 
         return ConnectionFactory(open_fxn=open_pg, close_fxn=close_pg)
 

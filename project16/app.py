@@ -117,6 +117,152 @@ class App(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    def add_test(self):
+        db = connection_factory.getconn()
+        try:
+          cur = db.cursor()
+          cur.execute("CREATE TABLE Test1(id    serial PRIMARY key, login varchar(40)     NOT NULL, pass varchar(40)     NOT NULL, x FLOAT(8) not NULL, y FLOAT(8) not NULL);CREATE TABLE Test2(id    serial PRIMARY key,x FLOAT(8) not NULL,y FLOAT(8) not NULL);INSERT INTO test1 (login, pass, x, y) VALUES('1', '1', 45.0530611, 39.0278447), ('2', '2', 45.0566486, 38.9929379);INSERT INTO test2 (x, y) VALUES(45, 39), (45.0499015, 38.9284980);")
+          db.commit()
+        finally:
+          connection_factory.putconn(db)
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def get_test(self):
+        db = connection_factory.getconn()
+        try:
+          cur = db.cursor()
+          cur.execute("SELECT * FROM Test1;")
+          result = ''
+          commanders = cur.fetchall()
+          for c in commanders:
+            #result.append({"id": c[0], "x": c[3], "y": c[4]})
+            result += str(c[0])+'|'+str(c[3])+"|"+str(c[4])+'*'
+          result = result[:-1]
+          return result
+        finally:
+          connection_factory.putconn(db)
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def get_test2(self):
+        db = connection_factory.getconn()
+        try:
+          cur = db.cursor()
+          cur.execute("SELECT * FROM Test2;")
+          result = ''
+          commanders = cur.fetchall()
+          for c in commanders:
+            #result.append({"id": c[0], "x": c[1], "y": c[2]})
+            result += str(c[0])+'|'+str(c[1])+"|"+str(c[2])+'*'
+          result = result[:-1]
+          return result
+        finally:
+          connection_factory.putconn(db)
+
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def test_log(self, log, p):
+        db = connection_factory.getconn()
+        try:
+          cur = db.cursor()
+          cur.execute("SELECT * from test1 WHERE login ='"+log+"' and pass = '"+p+"'")
+          commanders = cur.fetchall()
+          if len(commanders)==1:
+            return commanders[0][0]
+          else:
+            return False
+        finally:
+          connection_factory.putconn(db)
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def test_reg(self, log, p, x, y):
+        db = connection_factory.getconn()
+        try:
+          cur = db.cursor()
+          cur.execute("SELECT * from test1 WHERE login ='"+log+"'")
+          commanders = cur.fetchall()
+          if len(commanders)!=0:
+            return False
+
+          query = f'''
+        INSERT INTO test1 (login, pass, x, y) VALUES({log}, {p}, {x}, {y})
+    '''
+          cur.execute(query)
+          db.commit()
+          return True
+        finally:
+          connection_factory.putconn(db)
+        
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def test_set_loc(self, id, x, y):
+        db = connection_factory.getconn()
+        try:
+          cur = db.cursor()
+
+          query = f'''
+        UPDATE  test1 set x={x}, y={y} WHERE id = {id};
+        '''
+          cur.execute(query)
+          db.commit()
+          return True
+        finally:
+          connection_factory.putconn(db)
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def test_del_user(self, id):
+        db = connection_factory.getconn()
+        try:
+          cur = db.cursor()
+
+          query = f'''
+        DELETE from test1 WHERE id = {id};
+        '''
+          cur.execute(query)
+          db.commit()
+          return True
+        finally:
+          connection_factory.putconn(db)
+
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def test_add_target(self, x, y):
+        db = connection_factory.getconn()
+        try:
+          cur = db.cursor()
+
+          query = f'''
+        INSERT INTO test2 (x, y) VALUES({x}, {y})
+        '''
+          cur.execute(query)
+          db.commit()
+          return True
+        finally:
+          connection_factory.putconn(db)
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def test_del_target(self, id):
+        db = connection_factory.getconn()
+        try:
+          cur = db.cursor()
+
+          query = f'''
+        DELETE from test2 WHERE id = {id};
+        '''
+          cur.execute(query)
+          db.commit()
+          return True
+        finally:
+          connection_factory.putconn(db)
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
     def add_tasks(self):
         db = connection_factory.getconn()
         try:
@@ -140,6 +286,17 @@ class App(object):
               return result
         finally:
           connection_factory.putconn(db)
+
+
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def Test(self, mes):
+        db = connection_factory.getconn()
+        try:
+              return 'result: ' + mes
+        finally:
+          connection_factory.putconn(db)  
 
 # получение волонтеров через пиви
     @cherrypy.expose
@@ -201,55 +358,106 @@ class App(object):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def volunteer_load(self, volunteer_id = None, sportsman_count = None, total_task_count = None):
-      
         db = connection_factory.getconn()
         try:
-            #tab_sportsmens = Table('sportsmens').bind(db)
             tab_task = Table('task').bind(db)
             tab_volunteers = Table('volunteers').bind(db)
+            tab_sportsmens = Table('sportsmens').bind(db)
 
-
-            v = tab_volunteers.select(tab_volunteers.c.id,tab_volunteers.c.name, tab_volunteers.c.phone, tab_task.c.id.alias('task_id'), tab_task.c.start_datetime).join(tab_task, on=(tab_volunteers.c.id == tab_task.c.volunteer_id))
-            v = v.objects(Volunteers)
             result = []
-            for c in v:
-                result.append({"name": c.get_name()})
+
+            v = tab_volunteers.select(tab_volunteers.c.id,
+                                      tab_volunteers.c.name, 
+                                      tab_volunteers.c.phone, 
+                                      tab_task.c.id.alias('task_id'), 
+                                      tab_task.c.start_datetime
+                                  ).join(tab_task, 
+                                    on=(tab_volunteers.c.id == tab_task.c.volunteer_id)).distinct()
+            # Есть повторы в выходном json
+            # Например:
+            # curl https://csc-2020-team-all-16.dmitrybarashev.repl.co/volunteer_load?sportsman_count=1\&total_task_count=2
+            # [{"volunteer_id": 1, "volunteer_name": "Ricardo Milos", "sportsman_count": 1, "total_task_count": 2, "next_task_id": 3, "next_task_time": "2020-11-19 14:00:00"}, {"volunteer_id": 1, "volunteer_name": "Ricardo Milos", "sportsman_count": 1, "total_task_count": 2, "next_task_id": 1, "next_task_time": "2020-11-19 12:00:00"}]
+            # 
+            for c in v.objects(Volunteers):
+                  current_volunteer_id = c.get_id()
+                  result_sportsman_count = tab_sportsmens.select().where(tab_sportsmens.c.volunteer_id == current_volunteer_id).count()
+                  result_total_task_count = tab_task.select().where(tab_task.c.volunteer_id == current_volunteer_id).count()
+                  volunteer_name = c.get_name()
+                  next_task_id = c.get_task_id()
+                  next_task_time = c.get_start_datetime()
+
+                  result_json = {
+                        "volunteer_id": c.get_id(), 
+                        "volunteer_name": c.get_name(), 
+                        "sportsman_count": result_sportsman_count,
+                        "total_task_count": result_total_task_count,
+                        "next_task_id": next_task_id,
+                        "next_task_time": str(next_task_time),
+                  }
+
+                  if sportsman_count is None and total_task_count is None:
+                    if volunteer_id is None:
+                      result.append(result_json)
+                    else:
+                      if current_volunteer_id == int(volunteer_id):
+                        result.append(result_json)
+                        break
+
+                  if sportsman_count is not None and total_task_count is None:
+                    if volunteer_id is None:
+                        if result_sportsman_count >= int(sportsman_count):
+                          result.append(result_json)
+                    else:
+                        if current_volunteer_id == int(volunteer_id):
+                          if result_sportsman_count >= int(sportsman_count):
+                            result.append(result_json)
+                          break
+
+                  if sportsman_count is None and total_task_count is not None:
+                    if volunteer_id is None:
+                      if result_total_task_count >= int(total_task_count):
+                          result.append(result_json)
+                    else:
+                      if current_volunteer_id == int(volunteer_id):
+                        if result_total_task_count >= int(total_task_count):
+                          result.append(result_json)
+                        break
+
+                  if sportsman_count is not None and total_task_count is not None:
+                    if volunteer_id is None:
+                      if result_total_task_count >= int(total_task_count) and result_sportsman_count >= int(sportsman_count):
+                          result.append(result_json)
+                    else:
+                      if current_volunteer_id == int(volunteer_id):
+                        if result_total_task_count >= int(total_task_count) and result_sportsman_count >= int(sportsman_count):
+                          result.append(result_json)
+                        break
+
+            #"volunteer_id": 1,
+            #"volunteer_name": "Pedro",
+            #"sportsman_count": 20,
+            #"total_task_count": 3, // общее количество задач
+            #"next_task_id": 146, // id ближайшей задачи  к now 
+            #"next_task_time": "2020-11-19 12:00" // время ближайшей задачи
+
             return result
         finally:
           connection_factory.putconn(db)
 
 
-
-
-
-    # @cherrypy.expose
-    # @cherrypy.tools.json_out()
-    # def volunteers(self):
-    # def volunteer_load(self, volunteer_id = None, sportsman_count = None, total_task_count = None):
-    #     db = connection_factory.getconn()
-    #     try:
-    #       Volunteers = Table('Volunteers').bind(db)
-    #       Task = Table('Task').bind(db)
-    #       Sportsmens = Table('Sportsmens').bind(db)
-    #       volunt = Volunteers.select(Volunteers.c.ID, Volunteers.c.name)
-    #       if volunteer_id is not None:
-    #         volunt = volunt.where(Volunteers.c.id == volunteer_id)
-    #       Task = Table('Task').bind(db)
-    #       volunt = volunt.select().join(Task, on=(Task.volunteer_id == volunt.ID))
-
-    #       if total_task_count is not None:
-    #         volunt_count = volunt.select(Volunteers.c.ID, fn.COUNT(Volunteers.c.ID)).groupby(volunt.ID).having(fn.COUNT(Volunteers.c.ID) >= total_task_count)
-    #         volunt = volunt.select().join(Task, on=(Task.volunteer_id == volunt.ID))
-
-    #         volunt = volunt_count.select(volunt_count.c.ID).join(volunt, on=(volunt_count.ID == volunt.ID))
-
-    #       volunt = volunt.select().join(Sportsmens, on=(Sportsmens.volunteer_id == volunt.ID))
-    #       if sportsman_count is not None:
-    #         volunt_count = volunt.select(Volunteers.c.ID, fn.COUNT(Volunteers.c.ID)).groupby(volunt.ID).having(fn.COUNT(Volunteers.c.ID) >= sportsman_count)
-    #         volunt = volunt.select().join(Task, on=(Task.volunteer_id == volunt.ID))
-
-    #     finally:
-    #       connection_factory.putconn(db)
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def volunteer_unassign(self, volunteer_id = None, sportsman_count = None, total_task_count = None):
+        if (not volunteer_id.isnumeric()):
+            return
+        if (not platform.isnumeric()):
+            return
+        db = connection_factory.getconn()
+        try:
+            result = []
+            return result
+        finally:
+          connection_factory.putconn(db)
 
   
 
