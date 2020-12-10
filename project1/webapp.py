@@ -2,12 +2,13 @@
 
 ## Веб сервер
 import cherrypy
+import my_model
 import cherrypy_cors
 import re
 
 from connect import parse_cmd_line
-from connect import create_connection
 from static import index
+
 
 DIGITS_RE = re.compile('\d+')
 
@@ -27,46 +28,53 @@ class App(object):
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def countries(self):
-        with create_connection(self.args) as db:
-            cur = db.cursor()
-            cur.execute("SELECT id, name FROM Countries")
-            countries = cur.fetchall()
-            return [{"id": c[0], "name": c[1]} for c in countries]
+        return list(map(
+            lambda p: {
+                "id": p.id,
+                "name": p.get_name()
+            },
+            my_model.all_countries()
+        ))
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def volunteers(self):
-        with create_connection(self.args) as db:
-            cur = db.cursor()
-            cur.execute("SELECT id, name FROM volunteers;")
-            volunteers = cur.fetchall()
-            return [{"id": v[0], "name": v[1]} for v in volunteers]
+        return list(map(
+            lambda p: {
+                "id": p.id,
+                "name": p.get_name(),
+                "phone": p.get_phone()
+            },
+            my_model.all_volunteers()
+        ))
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def athlets(self):
+        return list(map(
+            lambda p: {
+              "id": p.id,
+              "name": p.get_name(),
+            	"delegation_id": p.get_delegation_id(),
+            	"volunteer_id": p.get_volunteer_id()
+            },
+            my_model.all_athlets()
+        ))
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def register(self, sportsman, country, volunteer_id):
-        with create_connection(self.args) as db:
-            cur = db.cursor()
-            cur.execute("SELECT * FROM Countries_delegation WHERE country_name = %s", (str(country),))
-            delegation = cur.fetchone()
-            if delegation is None:
-                raise cherrypy.HTTPError(404, "There is no delegation for country " + country)
-# http://csc-2020-team-all-1.dmitrybarashev.repl.co/register?country=Country1&sportsman=asd&volunteer_id=1
-            cur.execute("SELECT * FROM Volunteers WHERE id = %s", (int(volunteer_id),))
-            volunteer = cur.fetchone()
-            if volunteer is None:
-                raise cherrypy.HTTPError(404, "There is no volunteer id=" + volunteer_id)
+        # http://csc-2020-team-all-1.dmitrybarashev.repl.co/register?country=Country1&sportsman=asd&volunteer_id=1
+        delegation = my_model.all_delegations(country)
+        if delegation is None:
+            raise cherrypy.HTTPError(404, "There is no delegation for country " + country)
+                       
+        if my_model.all_volunteers(volunteer_id) is None:
+            raise cherrypy.HTTPError(404, "There is no volunteer id=" + volunteer_id)
 
-            if DIGITS_RE.match(sportsman) != None:
-                cur.execute(
-                  "UPDATE Athletes SET delegation_id = %s, volunteer_id = %s WHERE id = %s", 
-                  (delegation[0], int(volunteer_id), sportsman))
-            else:
-                cur.execute(
-                    "INSERT INTO Athletes (name, delegation_id, volunteer_id) values (%s, %s, %s)",
-                    (sportsman, delegation[0], int(volunteer_id)))
-            
-            cherrypy.response.status = 201
+        my_model.register_athlete(sportsman, country, volunteer_id)
+        
+        cherrypy.response.status = 201
 
 
     @cherrypy.expose

@@ -194,21 +194,19 @@ FROM volunteer_tasks t
                GROUP BY a.volunteer_id) mt ON a.volunteer_id = mt.volunteer_id AND mt.min_t = t.datetime;
 
 CREATE VIEW volunteer_load AS
-SELECT v.id AS volunteer_id,
-    v.name AS volunteer_name,
-    s.c AS sportsman_count,
+SELECT VC.id AS volunteer_id,
+    VC.name AS volunteer_name,
+    VC.c AS sportsman_count,
     t.c AS total_task_count,
     nt.id AS next_task_id,
     nt.datetime AS next_task_time
-FROM volunteers v
-         LEFT JOIN (
-            SELECT v.id, COUNT(a.id) c FROM
-                volunteers v LEFT JOIN athletes a ON v.id = a.volunteer_id
-            GROUP BY v.id
-          )     s ON v.id = s.id
-         LEFT JOIN (
-            SELECT v.id, COUNT(a.task_id) c FROM 
-                volunteers v LEFT JOIN assignees a ON v.id = a.volunteer_id 
-            GROUP BY v.id
-          )     t ON v.id = t.id
-         LEFT JOIN Next_Task nt ON nt.volunteer_id = v.id;
+FROM
+    (SELECT v.id, v.name, COUNT(a.id) c FROM
+        volunteers v LEFT JOIN athletes a ON v.id = a.volunteer_id
+    GROUP BY v.id) VC
+    LEFT JOIN (
+      SELECT v.id, COUNT(a.task_id) c FROM 
+          volunteers v LEFT JOIN assignees a ON v.id = a.volunteer_id 
+      GROUP BY v.id
+    )     t ON VC.id = t.id
+    LEFT JOIN Next_Task nt ON nt.volunteer_id = VC.id;
