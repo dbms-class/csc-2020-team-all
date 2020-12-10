@@ -1,6 +1,7 @@
 """Server app
 """
 import cherrypy
+import math
 
 from connect import create_connection_factory
 from connect import parse_cmd_line
@@ -125,7 +126,6 @@ class App(object):
                 result.append({'id': m[0], 'num': m[1], 'address': m[2]})
             return result
 
-
     @cherrypy.expose
     @cherrypy.tools.json_out()
     def status_retail(self, drug_id=None, min_remainder=None, max_price=None):
@@ -166,62 +166,64 @@ class App(object):
             result = list(query.execute())
             return result
 
-@cherrypy.expose
-@cherrypy.tools.json_out()
-def drug_move(self, drug_id, min_remainder, target_income_increase):
-  with self.connection_factory.conn() as db:
-    cur = db.cursor()
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def drug_move(self, drug_id, min_remainder, target_income_increase):
+        target_income_increase = float(target_income_increase)
+        with self.connection_factory.conn() as db:
+            cur = db.cursor()
 
-    # достаем всех, у кого положительный излишек
-    query = f'''
-        SELECT remainder - min_remainder AS diff, pharmacy_id, price
-        FROM Availability 
-        WHERE remainder > min_remainder AND medicine_id = {drug_id}
-        ORDER BY price 
-    '''
-    cur.execute(query)
-    pos_info = cur.fetchall()
+            # достаем всех, у кого положительный излишек
+            query = f'''
+            SELECT remainder - {min_remainder} AS diff, pharmacy_id, price::NUMERIC::float8
+            FROM Availability 
+            WHERE remainder > {min_remainder} AND medicine_id = {drug_id}
+            ORDER BY price'''
 
-    # достать всех, у кого отрицательный излишек
-    query = f'''
-        SELECT remainder - min_remainder AS diff, pharmacy_id, price
-        FROM Availability 
-        WHERE remainder < min_remainder AND medicine_id = {drug_id}
-        ORDER BY price DESC
-    '''
-    cur.execute(query)
-    neg_info = cur.fetchall()
-    
-    # перераспределить излишки + посчитать прибыль
-    # TODO: учитывать target_income_increase
-    income_increase = 0
-    pos_i = 0
-    neg_i = 0
+            cur.execute(query)
+            pos_info = cur.fetchall()
 
-    while (pos_i < len(pos_info) and neg_i < len(neg_info)):
-        if (pos_info[pos_i][2] >= neg_info[neg_i][2]): 
-          break
-        price_inc = neg_info[neg_i][2] - pos_info[pos_i][2] 
-        diff = min(-neg_info[neg_i][0], pos_info[pos_i][0])
-        income_increase += diff * price_inc
-        pos_info[pos_i] = (pos_info[pos_i][0] - diff, pos_info[pos_i][1], pos_info[pos_i][2])
-        neg_info[neg_i] = (neg_info[neg_i][0] + diff, neg_info[neg_i][1], neg_info[neg_i][2])
-        if (pos_info[pos_i][0] == 0): 
-           pos_i += 1
-        if (neg_info[neg_i][0] == 0):
-           neg_i += 1
-            
-    # update
-    # всем аптекам, у кого info[i][0] == 0 - выставляем min_remainder
-    query = f'''
-      UPDATE Availability
-      SET remainder = {min_remainder}
-      WHERE
-    '''
-    # TODO: тут append к query нужных id-шников аптек
+            # достать всех, у кого отрицательный излишек
+            query = f'''
+            SELECT remainder - {min_remainder} AS diff, pharmacy_id, price::NUMERIC::float8
+            FROM Availability 
+            WHERE remainder < {min_remainder} AND medicine_id = {drug_id}
+            ORDER BY price DESC'''
 
-    # TODO: + два апдейта на случай, если были частичные перекладывания (имеет смысл добавить на это флажки, чтобы не делать их просто так)
+            cur.execute(query)
+            neg_info = cur.fetchall()
 
+            # перераспределить излишки + посчитать прибыль
+            # TODO: учитывать target_income_increase
+            income_increase = 0
+            pos_i = 0
+            neg_i = 0
+
+            result = []
+
+            while pos_i < len(pos_info) and neg_i < len(neg_info) and income_increase < target_income_increase:
+                if pos_info[pos_i][2] >= neg_info[neg_i][2]:
+                    break
+                price_inc = neg_info[neg_i][2] - pos_info[pos_i][2]
+                diff = min(-neg_info[neg_i][0], pos_info[pos_i][0])
+                if income_increase + diff * price_inc > target_income_increase:
+                    diff = math.ceil((target_income_increase - income_increase) / price_inc)
+                income_increase += diff * price_inc
+                pos_info[pos_i] = (pos_info[pos_i][0] - diff, pos_info[pos_i][1], pos_info[pos_i][2])
+                neg_info[neg_i] = (neg_info[neg_i][0] + diff, neg_info[neg_i][1], neg_info[neg_i][2])
+                result.append({"from_pharmacy_id": pos_info[pos_i][1], "to_pharmacy_id": neg_info[neg_i][1],
+                               "price_difference": price_inc, "count": diff})
+                if (pos_info[pos_i][0] == 0):
+                    pos_i += 1
+                if (neg_info[neg_i][0] == 0):
+                    neg_i += 1
+
+            # ”from_pharmacy_id”: 1, // откуда
+            # перемещаем”to_pharmacy_id”: 10, // куда
+            # перемещаем”price_difference”: 200, // разница
+            # в
+            # цене”count”: 20 // ко
+            return result
 
 
 cherrypy.config.update({
