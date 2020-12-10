@@ -1,17 +1,17 @@
-DROP TABLE Task_drug;
-DROP TABLE Task;
-DROP TABLE Auto;
-DROP TABLE Prices;
-DROP TABLE SupplyDrug;
-DROP TABLE Supply;
-DROP TABLE Pharmacy;
-DROP TABLE Stock;
-DROP TABLE Distributor;
-DROP TABLE Drug;
-DROP TABLE Maker;
-DROP TABLE Certificate;
-DROP TABLE Laboratory;
-DROP TABLE ActiveComponent;
+DROP TABLE Task_drug CASCADE;
+DROP TABLE Task CASCADE;
+DROP TABLE Auto CASCADE;
+DROP TABLE Prices CASCADE;
+DROP TABLE SupplyDrug CASCADE;
+DROP TABLE Supply CASCADE;
+DROP TABLE Pharmacy CASCADE;
+DROP TABLE Stock CASCADE;
+DROP TABLE Distributor CASCADE;
+DROP TABLE Drug CASCADE;
+DROP TABLE Maker CASCADE;
+DROP TABLE Certificate CASCADE;
+DROP TABLE Laboratory CASCADE;
+DROP TABLE ActiveComponent CASCADE;
 
 -- строка представляет собой объект действующее вещество с его свойствами
 CREATE TABLE ActiveComponent(
@@ -40,7 +40,7 @@ LaboratoryName TEXT REFERENCES Laboratory (Name)
 CREATE TABLE Maker(id SERIAL PRIMARY KEY, name TEXT UNIQUE NOT NULL);
 
 --Множество лекарственных форм
-CREATE TYPE drug_form AS ENUM ('таблетка', 'капсула', 'ампула');
+--CREATE TYPE drug_form AS ENUM ('таблетка', 'капсула', 'ампула');
 
 -- строка представляет собой объект Лекарство с его свойствами
 CREATE TABLE Drug(

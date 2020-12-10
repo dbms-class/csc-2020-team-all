@@ -260,45 +260,53 @@ class App(object):
       prices_table = Table('prices').bind(db)
       pharmacy_table = Table('pharmacy').bind(db)
     
-      qmin = prices_table.select(
+      
+      try:
+        minid,qmin = prices_table.select(prices_table.c.pharmacy_id,
         fn.MIN(prices_table.c.price)
         ).where(
           prices_table.c.drug_id == drug_id,
           prices_table.c.packsleft >= min_remainder,
-          ).scalar()
+          ).group_by(prices_table.c.pharmacy_id).scalar(as_tuple=True)
 
-      
-      qminid = prices_table.select(
-        prices_table.c.pharmacy_id
-        ).where(
-          prices_table.c.drug_id == drug_id,
-          prices_table.c.packsleft >= min_remainder,
-          prices_table.c.price == qmin
-          ).execute()
-
-
-      qmax = prices_table.select(
+        maxid,qmax = prices_table.select(prices_table.c.pharmacy_id,
         fn.MAX(prices_table.c.price)
         ).where(
           prices_table.c.drug_id == drug_id,
           prices_table.c.packsleft < min_remainder,
-          ).scalar()
-
+          ).group_by(prices_table.c.pharmacy_id).scalar(as_tuple=True)
+      except TypeError:
+        return{"status" : "sad"}
       
-      qmaxid = prices_table.select(
-        prices_table.c.pharmacy_id
-        ).where(
-          prices_table.c.drug_id == drug_id,
-          prices_table.c.packsleft >= min_remainder,
-          prices_table.c.price == qmax
-          ).execute()
+      minleft = prices_table.select(prices_table.c.packsleft).where(prices_table.c.drug_id == drug_id,
+      prices_table.c.pharmacy_id == minid).scalar()
 
-    
+      maxleft = prices_table.select(prices_table.c.packsleft).where(prices_table.c.drug_id == drug_id,
+      prices_table.c.pharmacy_id == maxid).scalar()
+
+
+      minleft = int(minleft)
+      maxleft = int(maxleft)
+      price_difference = float(qmax) - float(qmin)
+      count = int(float(target_income)/price_difference)
+
+      if(minleft - count < int(min_remainder)):
+        count = minleft - min_remainder
+        
+
+      q1 = prices_table.update(packsleft = minleft - count).where(prices_table.c.pharmacy_id == minid and prices_table.c.drug_id == drug_id).execute()
+
+
+      q2 = prices_table.update(packsleft = minleft + count).where(prices_table.c.pharmacy_id == maxid and prices_table.c.drug_id == drug_id).execute()
+      
+      
+
       return {
-          "from_pharmacy_id": str(qminid), 
-          "to_pharmacy_id": str(qmaxid), 
-          "price_difference": float(qmax) - float(qmin), 
-          "count": 20} 
+          "from_pharmacy_id": str(minid), 
+          "to_pharmacy_id": str(maxid), 
+          "price_difference": price_difference, 
+          "count": count}
+
     
     #https://csc-2020-team-all-2.dmitrybarashev.repl.co/drug_move?drug_id=1&min_remainder=1&target_income=1
       

@@ -34,5 +34,4 @@ INSERT INTO Prices(Pharmacy_id, Drug_id, Price, PacksLeft) VALUES
 (2, 1, 50, 200),
 (3, 1, 200, 1);
 
-
 -- https://csc-2020-team-all-2.dmitrybarashev.repl.co/update_retail?drug_id=1&pharmacy_id=1&remainder=10&price=100
