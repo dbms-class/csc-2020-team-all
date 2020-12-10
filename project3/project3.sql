@@ -57,9 +57,10 @@ CREATE TABLE CONVENIENCE_APARTMENT_TABLE
 CREATE TABLE PRICE
 (
     id           SERIAL PRIMARY KEY,
-    apartment_id INT UNIQUE NOT NULL REFERENCES APARTMENT (id),
+    apartment_id INT  NOT NULL REFERENCES APARTMENT (id),
     week         INT        NOT NULL CHECK ( week > 0 and week <= 53 ),
-    price        INT        NOT NULL CHECK ( price >= 0 )
+    price        INT        NOT NULL CHECK ( price >= 0 ),
+    UNIQUE(apartment_id, week)
 );
 
 CREATE TABLE APPLICATION
