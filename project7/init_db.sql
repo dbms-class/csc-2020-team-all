@@ -27,12 +27,17 @@ INSERT INTO drug_form(id, name) VALUES
 (2, 'таблетка'),
 (3, 'ампула');
 
+INSERT INTO release_package(id, name) VALUES
+(1, 'коробка'),
+(2, 'флакон'),
+(3, 'тюбик');
+
 --INSERT INTO shipping_package(weight, release_packages, release_price) VALUES
 
-INSERT INTO drug(trademark, international_name, drug_form_id, substance_name, certificate_id) VALUES
-('trade1', 'internat1', 1, 'component1', 1),
-('trade2', 'internat2', 2, 'component2', 2),
-('trade3', 'internat3', 3, 'component3', 3);
+INSERT INTO drug(trademark, international_name, drug_form_id, substance_name, certificate_id, release_package_id) VALUES
+('trade1', 'internat1', 1, 'component1', 1, 1),
+('trade2', 'internat2', 2, 'component2', 2, 1),
+('trade3', 'internat3', 3, 'component3', 3, 1);
 
 INSERT INTO drugstore_price_list(drugstore_id, drug_id, price, items_count) VALUES
 (1, 1, 100, 100),

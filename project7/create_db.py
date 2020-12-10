@@ -14,7 +14,7 @@ if __name__ == '__main__':
   connection_factory = create_connection_factory(parse_cmd_line())
   
   # добавляем все таблички
-  add_data(connection_factory, "project7/project7.sql")
+  add_data(connection_factory, "project7.sql")
     
   # добавляем данные для тестировки
-  add_data(connection_factory, "project7/init_db.sql")
+  add_data(connection_factory, "init_db.sql")

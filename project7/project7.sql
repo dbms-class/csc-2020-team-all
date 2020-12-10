@@ -3,16 +3,17 @@ drop table warehouse_delivery;
 drop table drugstore_delivery_drugs;
 drop table drugstore_delivery;
 drop table transport_vehicle;
-drop table drugstore_price_list;
+drop table drugstore_price_list cascade;
 drop table drugstore;
 drop table warehouse;
-drop table distributor;
-drop table manufacturer;
-drop table drug_manufacturer;
-drop table drug;
+drop table distributor cascade;
+-- drop table manufacturer;
+-- drop table drug_manufacturer;
+drop table drug cascade;
 drop table shipping_package;
 drop table drug_form;
-drop table certificate;
+drop table release_package;
+drop table certificate cascade;
 drop table lab;
 drop table substance;
 
@@ -49,6 +50,13 @@ create table drug_form
     name text not null unique
 );
 
+-- Упакова лекарства "id" с названием "name"
+create table release_package
+(
+  id   serial primary key,
+  name text not null unique
+);
+
 -- Перевозочная упаковка с номером "id", весом "weight", числом "release_packages" отпускных упаковок по цене "release_price"
 create table shipping_package
 (
@@ -58,7 +66,7 @@ create table shipping_package
     release_price    numeric not null check (release_price > 0.0)
 );
 
--- Лекарство с номером "id" имеет торговое название "trademark", международное непатентованное название "international_name", лекарственную форму с номером "drug_form_id", действующее вещество с названием "substance_name", сертификат с номером "certificate_id", тип отпускной упаковки "release_package_type" и перевозится с упаковке с номером "shipping_package_id"
+-- Лекарство с номером "id" имеет торговое название "trademark", международное непатентованное название "international_name", лекарственную форму с номером "drug_form_id", действующее вещество с названием "substance_name", сертификат с номером "certificate_id", тип отпускной упаковки "release_package_id" и перевозится с упаковке с номером "shipping_package_id"
 -- Тип связи между drug и drug_form N:1, между drug и substance N:1, между drug и shipping_package 1:1, drug и certificate 1:1
 create table drug
 (
@@ -68,27 +76,28 @@ create table drug
     international_name   text not null,
     drug_form_id         int  not null references drug_form (id),
     substance_name       text not null references substance (name),
-    certificate_id       int  not null unique references certificate (id)
-    --release_package_type text not null, как понял теперь не нужно
+    certificate_id       int  not null unique references certificate (id),
+    release_package_id   int not null references release_package (id)
     -- перевозочные упаковки одного и того же лекарства неотличимы друг от друга
     --shipping_package_id  int unique references shipping_package (id)
 );
 
--- Лекарство с номером "drug_id" производится производителем с номером "manufacturer_id"
--- Реализует связь M:N между лекарствами и производителями
-create table drug_manufacturer
-(
-    drug_id         int,
-    manufacturer_id int,
-    primary key (drug_id, manufacturer_id)
-);
+-- Зачем вообще эти таблицы нужны?
+-- -- Производитель лекарств с номером "id" называется "name"
+-- create table manufacturer
+-- (
+--     id   serial primary key,
+--     name text not null
+-- );
 
--- Производитель лекарств с номером "id" называется "name"
-create table manufacturer
-(
-    id   serial primary key,
-    name text not null
-);
+-- -- -- Лекарство с номером "drug_id" производится производителем с номером "manufacturer_id"
+-- -- -- Реализует связь M:N между лекарствами и производителями
+-- create table drug_manufacturer
+-- (
+--     drug_id         int,
+--     manufacturer_id int,
+--     primary key (drug_id, manufacturer_id)
+-- );
 
 -- Дистрибьютор с номером "id" располагается по адресу "address", имеет банковский счет с номером "account_number" и контактное лицо с именем "contact_first_name", фамилией "contact_last_name" и номером телефона "contact_phone"
 create table distributor

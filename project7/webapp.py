@@ -1,8 +1,10 @@
 # encoding: UTF-8
 
 import cherrypy
-from connect import parse_cmd_line
-from connect import create_connection_factory
+#from connect import parse_cmd_line
+#from connect import create_connection_factory
+from connect import connection_factory
+from models import *
 
 from peewee import *
 
@@ -23,18 +25,117 @@ class _JSONEncoder(json.JSONEncoder):
 json_encoder = _JSONEncoder()
 
 def json_handler(*args, **kwargs):
-  # Adapted from cherrypy/lib/jsontools.py
   value = cherrypy.serving.request._json_inner_handler(*args, **kwargs)
   return json_encoder.iterencode(value)
 
 @cherrypy.expose
 class App(object):
     def __init__(self, args):
-      self.connection_factory = create_connection_factory(args)
+      #self.connection_factory = create_connection_factory(args)
+      self.connection_factory = connection_factory
 
     @cherrypy.expose
     def index(self):
       return "Hello web app"
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def update_retail(self, drug_id, pharmacy_id, remainder, price):
+      with self.connection_factory.conn() as db: 
+        cur = db.cursor()
+        cur.execute(
+          "SELECT * FROM drugstore_price_list "
+          "WHERE drugstore_id = %s AND drug_id = %s",
+          (pharmacy_id, drug_id)
+        )
+
+        if cur.fetchone() is not None:
+          #если есть, то обновляем
+          cur.execute(
+            "UPDATE drugstore_price_list "
+            "SET items_count = %s, price = %s "
+            "WHERE drugstore_id = %s AND drug_id = %s",
+            (remainder, price, pharmacy_id, drug_id)
+          )
+          key = 'update'
+        else:
+          # иначе вставляем
+          cur.execute(
+            "INSERT INTO drugstore_price_list "
+            "(drugstore_id, drug_id, price, items_count) "
+            "VALUES (%s, %s, %s, %s)",
+            (pharmacy_id, drug_id, price, remainder)
+          )
+          key = 'insert'     
+
+        #обязательный
+        db.commit()
+        return {key : 'ok'}
+    
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def update_retail_peewe(self, drug_id, pharmacy_id, remainder, price):
+      with self.connection_factory.conn() as db:
+        prices_table = Table('drugstore_price_list').bind(db)
+        q = prices_table.select(
+          prices_table.c.id
+          ).where(
+            prices_table.c.drugstore_id == pharmacy_id,
+            prices_table.c.drug_id == drug_id
+            )
+        
+        if q.exists():
+          # если есть, то обновляем
+          prices_table.update(
+            items_count = remainder,
+            price = price
+            ).where(
+              prices_table.c.drugstore_id == pharmacy_id, 
+              prices_table.c.drug_id == drug_id
+            ).execute()
+          key = 'update'
+        else:
+          prices_table.insert(
+            drugstore_id  = pharmacy_id,
+            drug_id = drug_id,
+            price = price, 
+            items_count = remainder
+          ).execute() 
+          key = 'insert'
+            
+        #необязательный????
+        #db.commit()
+        return {key : 'ok'}
+    
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def update_retail_orm(self, drug_id, pharmacy_id, remainder, price):
+      # q = DrugStorePriceList.select().join(Drug).switch(DrugStorePriceList).join(DrugStore).where(
+      #   DrugStorePriceList.drugstore.id == pharmacy_id, DrugStorePriceList.drug.id == drug_id)
+
+      q = DrugStorePriceList.select().where(
+        DrugStorePriceList.drugstore_id == pharmacy_id, DrugStorePriceList.drug_id == drug_id
+        )
+
+      if q.exists():
+        DrugStorePriceList.update(
+            items_count = remainder,
+            price = price
+          ).where(
+            DrugStorePriceList.drugstore_id == pharmacy_id, DrugStorePriceList.drug_id == drug_id
+        ).execute()
+        key = 'update'
+      else:
+        DrugStorePriceList.create(
+          drugstore_id = pharmacy_id,
+          drug_id = drug_id,
+          price = price, 
+          items_count = remainder
+        )
+        key = 'insert'
+            
+      return {key : 'ok'}  
+
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
@@ -45,7 +146,7 @@ class App(object):
         result = []
         drugs = cur.fetchall()
         for d in drugs:
-            result.append({"id": d[0], "trademark": d[1], "international_name": d[2]})
+          result.append({"id": d[0], "trademark": d[1], "international_name": d[2]})
         return result
     
     @cherrypy.expose
@@ -59,6 +160,15 @@ class App(object):
           drug_table.c.international_name
         )
         return list(d.execute())
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def drugs_orm(self):
+      q = Drug.select()
+      result = []
+      for d in q:
+        result.append({"id": d.id, "trademark": d.trademark, "international_name": d.international_name})
+      return result
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
@@ -89,6 +199,24 @@ class App(object):
         return list(p.execute())
 
     @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def drugs_orm(self):
+      q = Drug.select()
+      result = []
+      for d in q:
+        result.append({"id": d.id, "trademark": d.trademark, "international_name": d.international_name})
+      return result
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def pharmacies_orm(self):
+      q = DrugStore.select()
+      result = []
+      for d in q:
+        result.append({"id": d.id, "name": d.name, "address": d.address})
+      return result
+
+    @cherrypy.expose
     @cherrypy.tools.json_out(handler=json_handler)
     def status_retail(self, drug_id = None, min_remainder = None, max_price = None):
       with self.connection_factory.conn() as db:
@@ -110,10 +238,10 @@ class App(object):
           drug_table.c.international_name,
           prices_table.c.drugstore_id,
           pharmacy_table.c.address,
-          prices_table.c.items_count#,
-          # prices_table.c.price,
-          # drugs_min_max_price.c.min_price,
-          # drugs_min_max_price.c.max_price
+          prices_table.c.items_count,
+          prices_table.c.price,
+          drugs_min_max_price.c.min_price,
+          drugs_min_max_price.c.max_price
         ).join(
           drug_table, on=(prices_table.c.drug_id == drug_table.c.id)
         ).join(
@@ -166,4 +294,5 @@ cherrypy.config.update({
   'server.socket_host': '0.0.0.0',
   'server.socket_port': 8080,
 })
-cherrypy.quickstart(App(parse_cmd_line()))
+#cherrypy.quickstart(App(parse_cmd_line()))
+cherrypy.quickstart(App(connection_factory))
