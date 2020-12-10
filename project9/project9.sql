@@ -81,9 +81,11 @@ CREATE TYPE AlbumType AS ENUM ('cингл', 'двойной альбом', 'ст
 CREATE TABLE Album
 (
     id       SERIAL,
+    name TEXT NOT NULL,
     type     AlbumType default NULL,
     genre_id INT NOT NULL,
     group_id INT NOT NULL,
+    year INT NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (genre_id) REFERENCES Genre (id),
     FOREIGN KEY (group_id) REFERENCES Groups (id)
