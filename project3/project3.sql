@@ -170,6 +170,7 @@ SELECT A.id, A.name, A.country_id, A.num_of_bed, P.week, P.price
 FROM APARTMENT A LEFT JOIN PRICE P ON A.id=P.apartment_id;
 
 
+
 CREATE OR REPLACE VIEW LANDLORD_UNRENTED_APARTMENTS AS 
 SELECT A.id AS apartment_id, A.landlord_id AS landlord_id, P.price AS price, P.week AS week
   FROM APPLICATION App 
