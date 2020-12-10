@@ -9,6 +9,7 @@ from peewee import *
 import json
 from decimal import Decimal
 
+# наверное можно как то проще
 class _JSONEncoder(json.JSONEncoder):
   def default(self, obj):
     if isinstance(obj, Decimal):
