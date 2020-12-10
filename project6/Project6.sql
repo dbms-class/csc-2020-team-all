@@ -135,13 +135,25 @@ WITH Task_Volonteer as (SELECT Task.id_task as id_task,
              GROUP by volonteer_id
          ) MT on TV.time_task = MT.next_task_time and TV.volonteer_id = MT.volonteer_id
      ),
-     Aggregate_Volonteer_Task as (SELECT id_volonteer,
+    --  Aggregate_Volonteer_Task as (SELECT id_volonteer,
+    --                                      name_volonteer,
+    --                                      count(A.id_athlete) as sportsman_count,
+    --                                      count(TV.id_task)   as total_task_count
+    --                               FROM Volonteers V
+    --                                        JOIN Task_Volonteer TV on TV.volonteer_id = V.id_volonteer
+    --                                        JOIN Athlete A on A.volonteer_id = V.id_volonteer
+    --                               GROUP BY V.id_volonteer, V.name_volonteer)
+    Aggregate_Volonteer_Task_ath as (SELECT id_volonteer,
                                          name_volonteer,
-                                         count(A.id_athlete) as sportsman_count,
+                                         count(A.id_athlete) as sportsman_count
+                                  FROM Volonteers V
+                                           JOIN Athlete A on A.volonteer_id = V.id_volonteer
+                                  GROUP BY V.id_volonteer, V.name_volonteer),
+    Aggregate_Volonteer_Task_tsk as (SELECT id_volonteer,
+                                         name_volonteer,
                                          count(TV.id_task)   as total_task_count
                                   FROM Volonteers V
                                            JOIN Task_Volonteer TV on TV.volonteer_id = V.id_volonteer
-                                           JOIN Athlete A on A.volonteer_id = V.id_volonteer
                                   GROUP BY V.id_volonteer, V.name_volonteer)
 SELECT V.id_volonteer,
        V.name_volonteer,
@@ -150,9 +162,11 @@ SELECT V.id_volonteer,
        next_task_id,
        next_task_time
 from Volonteers V
-         LEFT JOIN Aggregate_Volonteer_Task Agg on Agg.id_volonteer = V.id_volonteer
+         LEFT JOIN Aggregate_Volonteer_Task_ath Agg_ath on Agg_ath.id_volonteer = V.id_volonteer
+         LEFT JOIN Aggregate_Volonteer_Task_tsk Agg_tsk on Agg_tsk.id_volonteer = V.id_volonteer
          LEFT JOIN Next_Volonteer_Task NT on NT.volonteer_id = V.id_volonteer;
 
+--- 5 задание
 
 CREATE OR REPLACE VIEW Volonteer_assign
 AS
@@ -160,15 +174,63 @@ SELECT V.name_volonteer as volonteer_name, V.id_volonteer as volonteer_id, D.id_
 FROM Volonteers V JOIN Athlete A ON (V.id_volonteer=A.volonteer_id)
 JOIN Delegation D ON (A.delegation_id=D.id_delegation);
 
+-- волонтер 1 и волонтер 2 имеют общую делегацию
 CREATE OR REPLACE VIEW Volonteer_intersection
 AS
 SELECT V1.volonteer_id as volonteer_1_id, V1.volonteer_name as volonteer_1_name, V2.volonteer_id as volonteer_2_id, V2.volonteer_name as volonteer_2_name
 FROM Volonteer_assign V1 FULL OUTER JOIN Volonteer_assign V2 ON V1.delegation_id=V2.delegation_id;
 
-
--- TODO 2ой пункт ТЗ
-CREATE OR REPLACE VIEW Volonteer_change
+-- задания 1 и задание 2 перескаются на <= 1 час
+CREATE OR REPLACE VIEW Close_tasks
 AS
-SELECT VI.volonteer_1_id as shiftworker, VI.volonteer_2_id as truant, VL.total_task_count, VL.next_task_time
-FROM Volonteer_intersection VI JOIN Volonteers_load VL 
-ON(VI.volonteer_1_id=VL.volonteer_id)
+SELECT T1.id_task AS id_task_first, T2.id_task AS id_task_second 
+FROM Task T1, Task T2
+WHERE (T1.time_task <=  T2.time_task + interval '1 hour') AND
+(T1.time_task >=  T2.time_task - interval '1 hour');
+
+-- Task_1_volonteer_2 выводит задание 1 и волонтера 2, что у волонтера 2 нет заданий пересекающихмя с заданием 1 <= 1 час.
+CREATE OR REPLACE VIEW Task_1_volonteer_2
+AS
+WITH X AS
+(select id_task_first, volonteer_id
+FROM Task_and_volonteers TV JOIN Close_tasks C ON (C.id_task_second = TV.id_task)),
+Y as
+(select T.id_task as id_task_first, V.id_volonteer as volonteer_id
+FROM Task T CROSS JOIN Volonteers V)
+SELECT * FROM Y WHERE volonteer_id NOT IN (SELECT volonteer_id FROM X WHERE X.id_task_first=Y.id_task_first);
+
+
+
+
+--задание1 волонтер1-прогульщик волонтер2-сменщик. задача 1 принадлежит волонтеру 1, intersection проверят, что у волотеров 1 и 2 пересекаются делегации. Task_1_volonteer_2 проверяет, что у волонтера 2 нет заданий пересекающихмя с заданием 1 <= 1 час.
+CREATE OR REPLACE VIEW Task_1_volonteer_1_volonteer_2
+AS
+SELECT DISTINCT volonteer_1_id, volonteer_2_id, id_task
+FROM Volonteer_intersection VI 
+JOIN Task_and_volonteers TV ON VI.volonteer_1_id = TV.volonteer_id
+JOIN Task_1_volonteer_2 T1V2 ON (T1V2.id_task_first = TV.id_task) AND (T1V2.volonteer_id = VI.volonteer_2_id);
+
+
+--наконец добавим еще и колличество заданий
+CREATE OR REPLACE VIEW Task_1_volonteer_1_volonteer_2_count
+AS
+WITH X AS 
+(SELECT volonteer_id, COUNT(id_task)
+FROM Task_and_volonteers
+GROUP BY volonteer_id)
+SELECT DISTINCT volonteer_1_id, volonteer_2_id, id_task, X.count AS count FROM 
+Task_1_volonteer_1_volonteer_2 TV JOIN X 
+ON (X.volonteer_id=TV.volonteer_2_id);
+
+
+
+-- выведем минимумы (все, если возможных сменщиков несколько) и добавим имя сменщика.
+CREATE OR REPLACE VIEW Final_view
+AS
+SELECT DISTINCT C.volonteer_1_id, C.volonteer_2_id, V.name_volonteer, C.id_task, C.count
+FROM Task_1_volonteer_1_volonteer_2_count C JOIN Volonteers V ON
+C.volonteer_2_id = V.id_volonteer
+WHERE C.count IN (SELECT min(count) FROM Task_1_volonteer_1_volonteer_2_count
+WHERE volonteer_1_id=C.volonteer_1_id AND id_task=C.id_task
+GROUP BY volonteer_1_id, id_task);
+

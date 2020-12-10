@@ -179,7 +179,6 @@ class App(object):
     @cherrypy.tools.json_out()
     def volunteer_unassign(self, volunteer_id, task_ids):
       pass
-
          
 
   
