@@ -25,7 +25,13 @@ def index():
         <label for="weekInput">Неделя</label>
         <input type="number" id="weekInput" name="week"></input>
     </div>
+    <div class="form-group">
+        <label for="priceInput">Цена</label>
+        <input type="number" id="priceInput" name="price"></input>
+    </div>
+    
 </form>
+
 <script lang="js">
     function loadData() {
         const apartmentSelect = $('#apartmentSelect');

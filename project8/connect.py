@@ -1,4 +1,3 @@
-#
 import argparse
 
 # Драйвер SQLite3
@@ -10,7 +9,7 @@ from playhouse.db_url import connect
 
 # Разбирает аргументы командной строки.
 def parse_cmd_line():
-    parser = argparse.ArgumentParser(description='Эта программа учёта бронирований')
+    parser = argparse.ArgumentParser(description='Приложение для аренды жилья "Вписка"')
     parser.add_argument('--pg-host', help='PostgreSQL host name', default='localhost')
     parser.add_argument('--pg-port', help='PostgreSQL port', default=5432)
     parser.add_argument('--pg-user', help='PostgreSQL user', default='')
@@ -40,14 +39,6 @@ class ConnectionFactory:
         finally:
             self.close_fxn(result)
 
-    # @contextmanager
-    # def conn(self):
-    #     try:
-    #         result = self.open_fxn()
-    #         yield result
-    #     finally:
-    #         print("finally in context")
-    #         self.close_fxn(result)
 
 def create_connection_factory(args):
     # Создаёт подключение к SQLite в соответствии с аргументами командной строки.
