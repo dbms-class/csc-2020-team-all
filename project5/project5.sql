@@ -122,3 +122,62 @@ CREATE VIEW timetable AS
                         RS.route_id = R.id
     GROUP BY
         RS.stop_id, S.address, A.all_first_arrival, A.all_last_arrival, RS.route_id, R.route;
+
+
+CREATE VIEW full_slots AS
+    SELECT
+        RS.route_id AS route_num,
+        RS.stop_id AS stop_id,
+        RS.platform_number AS platform_id,
+        HOUR(RS.arrival_time) * 60 + MINUTE(RS.arrival_time) AS minute_num,
+        RS.is_working_day AS is_working_day
+    FROM
+        route_stop RS;
+
+route_num
+
+    SELECT
+        Y.route_num,
+        Y.stop_id,
+        Y.platform_id,
+        Y.minute_num,
+        Y.is_working_day
+    FROM
+        full_slots X
+            JOIN
+        full_slots Y
+            ON
+                X.stop_id = Y.stop_id
+                    AND
+                X.platform_id = Y.platform_id
+                    AND
+                X.is_working_day = Y.is_working_day
+                    AND
+                X.minute_num + shift_min = Y.minute_num
+                    AND
+                        X.minute_num BETWEEN start_min and end_min - 1
+                            AND 
+                        X.route_num = route_num
+                            AND
+                        X.stop_id ... AND X.platform_id
+                            AND
+                        X.is_working_day = is_working_day
+                    AND NOT(
+                        Y.minute_num BETWEEN start_min and end_min - 1
+                            AND 
+                        Y.route_num = route_num
+                    )
+                
+
+
+CREATE VIEW collided_route_stops AS
+    SELECT
+        RS.route_id AS route_num,
+        RS.stop_id AS stop_id,
+        RS.platform_number AS platform_id,
+        HOUR(RS.arrival_time) * 60 + MINUTE(RS.arrival_time) AS minute_num,
+        RS.is_working_day AS is_working_day
+    FROM
+        route_stop RS
+        
+        

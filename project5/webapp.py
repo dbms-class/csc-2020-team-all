@@ -48,7 +48,7 @@ class App(object):
           return
       if (not platform.isnumeric()):
           return
-      if (not _time.isnumeric() and not(1 <= int(_time) <= 1440)):
+      if (not _time.isnumeric() and not(1 <= int(_time) and int(_time) <= 1440)):
           return
       if (not route_id.isnumeric()):
           return
@@ -150,6 +150,54 @@ class App(object):
         finally:
             # connection_factory.putconn(db)
             sql_db.close()
+
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def shift_timetable(self, route_num, stop_ids, start_min=0, end_min=1440, shift_min, is_working_day):
+
+      if (not route_num.isnumeric()):
+          return {"error": "route_num is not numeric"}
+      if (not start_min.isnumeric())
+          return {"error": "start_min is not numeric"}
+      start_min = int(start_min)
+      if (not end_min.isnumeric())
+          return {"error": "end_min is not numeric"}
+      end_min = int(end_min)
+      if (not is_working_day.isnumeric())
+          return {"error": "is_working_day is not numeric"}
+      if (not shift_min.isnumeric()):
+          return {"error": "shift_min is not numeric"}
+      shift_min = int(shift_min)
+      is_working_day = int(is_working_day)
+      if is_working_day == 0:
+          is_working_day = False
+      elif is_working_day == 1:
+          is_working_day = True
+      else:
+          return {"error": "is_working_day is neither 0 nor 1"}
+          
+
+      all_stops = (list_str_stops == '*')
+      if !all_stops:
+          stops_to_change = []
+          list_str_stops = stop_ids.split(',')
+          for str_stop in list_str_stops:
+              stop_platform = str_stop.split('-')
+              if len(stop_platform) != 2:
+                  return
+              if not stop_platform[0].isnumeric() or not stop_platform[1].isnumeric():
+                  return
+              stop = int(stop_platform[0])
+              platform = int(stop_platform[1])
+              stops_to_change.append((stop, platform))
+
+      query = ''
+          
+
+
+
+
 
 cherrypy.config.update({
   'server.socket_host': '0.0.0.0',
