@@ -176,4 +176,3 @@ SELECT A.id AS apartment_id, A.landlord_id AS landlord_id, P.price AS price, P.w
   JOIN Apartment A ON  App.apartment_id=A.id 
   JOIN Price P ON App.apartment_id=P.apartment_id AND EXTRACT(WEEK from App.period_start)=P.week 
   WHERE App.approved IS NULL OR App.approved=FALSE;
-
