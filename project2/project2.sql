@@ -40,7 +40,7 @@ LaboratoryName TEXT REFERENCES Laboratory (Name)
 CREATE TABLE Maker(id SERIAL PRIMARY KEY, name TEXT UNIQUE NOT NULL);
 
 --Множество лекарственных форм
---CREATE TYPE drug_form AS ENUM ('таблетка', 'капсула', 'ампула');
+CREATE TYPE drug_form AS ENUM ('таблетка', 'капсула', 'ампула');
 
 -- строка представляет собой объект Лекарство с его свойствами
 CREATE TABLE Drug(
