@@ -75,7 +75,7 @@ def get_delegation(country_name):
     if country_id is None:
         return None
     q = q.where(DelegationEntity.country_id == country_id)
-    return Delegation(q[0])
+    return Delegation(q[0]) if len(q) > 0 else None
 
 
 def get_country_id_from_name(country_name):
@@ -129,9 +129,12 @@ class Athlet:
 
 
 def register_athlete(name, country_name, volunteer_id):
-    delegation_id = get_delegation(country_name).id
+    delegation = get_delegation(country_name)
+    delegation_id = delegation.id if delegation is not None else None 
+    
     if delegation_id is None:
         return False
+    
     if name.isdigit():
         athlet = AthletEntity.get(id=name)
         if athlet:

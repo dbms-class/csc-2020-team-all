@@ -72,6 +72,7 @@ class App(object):
 
             if my_model.all_volunteers(volunteer_id) is None:
                 raise cherrypy.HTTPError(404, "There is no volunteer id=" + volunteer_id)
+                
         except cherrypy.HTTPError:
             cherrypy.response.status = 400
 
