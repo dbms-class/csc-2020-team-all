@@ -7,7 +7,7 @@ import cherrypy_cors
 import re
 
 from connect import parse_cmd_line, connection_factory
-from static import index
+#from static import index
 
 DIGITS_RE = re.compile('\d+')
 
@@ -21,9 +21,9 @@ class App(object):
     def start(self):
         return "Hello web app"
 
-    @cherrypy.expose
-    def index(self):
-        return index()
+    # @cherrypy.expose
+    # def index(self):
+    #     return index()
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
