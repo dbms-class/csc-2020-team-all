@@ -12,10 +12,8 @@ class CountryEntity(Model):
         table_name = 'countries'
 
 
-def all_countries(country_id=None):
+def all_countries():
     q = CountryEntity.select()
-    if country_id is not None:
-        q = q.where(CountryEntity.id == country_id)
     return [Country(p) for p in q]
 
 
